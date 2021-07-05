@@ -1,0 +1,10 @@
+*/.DS_Store
+.DS_Store
+/dist
+/log/*
+!log/.keep
+/data/*
+!/data/.keep
+/.vscode
+/node_modules
+
