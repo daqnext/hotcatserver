@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 10:47:59
- * @LastEditTime: 2021-07-07 10:57:20
+ * @LastEditTime: 2021-07-09 10:43:20
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/config/dev_config.ts
@@ -12,7 +12,7 @@ module.exports = {
   logfilename:'dev.log',
   logtypes:['console', 'file'],
   /// server port 
-  port: 6000,
+  port: 7000,
 
   //sqldb 
   db_host:'localhost',

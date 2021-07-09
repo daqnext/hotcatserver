@@ -1,7 +1,7 @@
 /*
  * @Author: your name
- * @Date: 2021-07-09 08:50:53
- * @LastEditTime: 2021-07-09 09:12:33
+ * @Date: 2021-07-07 10:47:59
+ * @LastEditTime: 2021-07-09 08:50:03
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/router/router.ts
@@ -15,7 +15,6 @@ import cors from "koa2-cors";
 import router from "koa-router";
 import moment from "moment";
 import bodyParser from "koa-bodyparser";
-import path from "path";
 const json = require("koa-json");
 
 const koaLogger = koa_logger((str) => {
@@ -26,28 +25,36 @@ class AppRouter {
     // app:koa<koa.DefaultState, koa.DefaultContext>=null
     // router:router=null
     
-    async preprocess(ctx: koa.Context, next: koa.Next) {
+    static async preprocess(ctx: koa.Context, next: koa.Next) {
         //console.log("preprocess-start");
         await next();
         //console.log("preprocess-back");
     }
 
-    async postprocess(ctx: koa.Context, next: koa.Next) {
+    static async postprocess(ctx: koa.Context, next: koa.Next) {
         //console.log("postprocess-start");
         await next();
         //console.log("postprocess-back");
     }
 
-    async afterprocess() {}
+    static async afterprocess() {}
 
-    init(controllerPath:string) {
+    static GenRouterInstance(){
+        const app=new koa({
+            proxy: true,
+            proxyIpHeader: "X-Real-IP",
+        });
+        
+    }
+
+    static init(colltrolerPath:string) {
         const App = new koa({
             proxy: true,
             proxyIpHeader: "X-Real-IP",
         });
         const Router = new router();
 
-        fs.readdir(controllerPath, (err, files) => {
+        fs.readdir(rootDIR + "/controller", (err, files) => {
             //no any controller do nothing
             if (files == null || files.length == 0) {
                 console.error("no any controller file server won't start ");
@@ -56,8 +63,7 @@ class AppRouter {
 
             //initialize all the controllers
             files.forEach((file) => {
-                const filePath=path.join(controllerPath,file)
-                require(filePath).init(Router);
+                require("../controller/" + file).init(Router);
             });
 
             App.use(koaLogger);

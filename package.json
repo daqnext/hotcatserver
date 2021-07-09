@@ -6,15 +6,21 @@
   "scripts": {
     "prepare_data_dev": "ts-node src/inidata/iniMain.ts dev_config",
     "prepare_data_prod": "tsc && node dist/inidata/iniMain.js prod_config",
-    "start": "tsc && node dist/cluster.js prod_config",
-    "dev": "nodemon --config nodemon.json src/app.ts  dev_config",
+    "dev_center": "nodemon --config nodemon.json src/subapp/centerapp/app.ts  dev_center_config",
+    "dev_region": "nodemon --config nodemon.json src/subapp/regionapp/app.ts  dev_region_config",
     "test_dev": "ts-mocha  test/*.ts dev_config --timeout 15000 --exit",
-    "test_prod": "ts-mocha test/*.ts prod_config --timeout 15000 --exit"
+    "test_prod": "ts-mocha test/*.ts prod_config --timeout 15000 --exit",
+    "start_center": "tsc && node dist/cluster.js prod_config",
+    "start_region": "tsc && node dist/cluster.js prod_config",
+    "pm2_start_center":"tsc && pm2 start pm2/prod_center.json",
+    "pm2_start_region":"tsc && pm2 start pm2/prod_region.json"
   },
   "author": "LEO",
   "license": "MIT",
   "devDependencies": {
     "@types/expect": "^24.3.0",
+    "@types/koa-bodyparser": "^4.3.0",
+    "@types/koa-logger": "^3.1.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^15.12.5",
     "chai": "^4.3.4",
@@ -28,17 +34,22 @@
     "@types/chai": "^4.2.19",
     "@types/ioredis": "^4.26.4",
     "@types/koa": "^2.13.3",
-    "@types/koa-bodyparser": "^4.3.1",
     "@types/koa-router": "^7.4.2",
     "@types/log4js": "^2.3.5",
+    "captchapng": "0.0.1",
     "ioredis": "^4.27.6",
     "koa": "^2.13.1",
+    "koa-better-http-proxy": "^0.2.9",
     "koa-bodyparser": "^4.3.0",
     "koa-json": "^2.0.2",
     "koa-logger": "^3.2.1",
+    "koa-proxy": "^1.0.0-alpha.3",
     "koa-router": "^10.0.0",
+    "koa2-cors": "^2.0.6",
     "log4js": "^6.3.0",
+    "moment": "^2.29.1",
     "mysql2": "^2.2.5",
-    "sequelize": "^6.6.4"
+    "sequelize": "^6.6.4",
+    "string-random": "^0.1.3"
   }
 }

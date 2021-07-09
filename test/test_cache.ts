@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import {redisTool} from "../src/redis/redisTool"
 import {cacheTool} from "../src/cache/cacheTool"
-import {Time} from "../src/global"
+import {Time} from "../src/utils/time"
 const redis= redisTool.getSingleInstance().redis;
 
 describe('cache test', function() {
