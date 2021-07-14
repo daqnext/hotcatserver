@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 10:47:59
- * @LastEditTime: 2021-07-08 14:39:54
+ * @LastEditTime: 2021-07-12 10:19:15
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/model/userModel.ts
@@ -55,6 +55,11 @@ userModel.init(
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    created:{
+      type: DataTypes.BIGINT,
+      defaultValue:0,
+      allowNull: false,
+    }
   },
   {
     underscored: true,
@@ -73,7 +78,7 @@ const userModel_createData = async function () {
     where: {
       cookie: userManager.genCookie(),
       name: "admin",
-      email: "admin@meson.com",
+      email: "admin@hotcat.live",
       password: userManager.genMd5password("abc123"),
       created:moment.now(),
       permission: JSON.stringify(["admin"]),
@@ -82,8 +87,8 @@ const userModel_createData = async function () {
   await userModel.findOrCreate({
     where: {
       cookie: userManager.genCookie(),
-      name: "jack",
-      email: "jack@gmail.com",
+      name: "testuser",
+      email: "testuser@gmail.com",
       password: userManager.genMd5password("abc123"),
       created:moment.now(),
       permission: JSON.stringify([]),

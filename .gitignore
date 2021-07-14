@@ -11,3 +11,4 @@
 
 src/config/dev_config.ts
 src/config/prod_config.ts
+public/

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 11:34:52
- * @LastEditTime: 2021-07-09 08:58:58
+ * @LastEditTime: 2021-07-09 18:31:48
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/userController.ts
@@ -10,15 +10,40 @@ import koa from "koa";
 import router from "koa-router";
 import { IUserInfo } from "../../../interface/interface";
 import { IUserLoginMsg, IUserRegisterMsg } from "../../../interface/msg";
+import { auth } from "../../../manager/common/auth";
 import { userManager } from "../../../manager/project/userManager";
 import { Utils } from "../../../utils/utils";
+import multer from "@koa/multer";
+import fs from "fs";
+import path from "path";
+import { rootDIR } from "../../../global";
+import randomString from "string-random";
+import { resp } from "../../../utils/resp";
 
+const upload = multer({
+    limits: {
+        fields: 10,
+        files: 1,
+        fileSize: 1 * 1024, // 1MB
+    },
+    fileFilter: (ctx, file, cb) => {
+        let extName = path.extname(file.originalname);
+        if (!Utils.filterFileExt(extName, [".png", ".jpg", ".jpeg", ".bmp", ".svg"])) {
+            cb(null, false);
+            cb(new Error("format error"));
+        } else {
+            cb(null, true);
+        }
+    },
+});
 class userController {
     public static init(Router: router) {
         let C = new userController();
         //config all the get requests
         Router.post("/api/user/register", C.userRegister);
         Router.post("/api/user/login", C.userLogin);
+
+        Router.post("/api/user/uploadavatar", auth.ParseTokenMiddleware(), C.handleUploadAvatar);
 
         //config all the post requests
         return C;
@@ -174,6 +199,58 @@ class userController {
             status: 0,
             data: userInfo,
         };
+    }
+
+    async handleUploadAvatar(ctx: koa.Context, next: koa.Next) {
+        try {
+            await upload.single("avatar")(ctx, next);
+
+            const imgInfo = Utils.sizeOfImg(ctx.file.buffer);
+            if (imgInfo == null) {
+                resp.send(ctx, 1, null, "unsupported file");
+                return;
+            }
+            if (
+                imgInfo.width < 100 ||
+                imgInfo.width > 200 ||
+                imgInfo.height < 100 ||
+                imgInfo.height > 200
+            ) {
+                resp.send(ctx, 1, null, "image size error");
+                return;
+            }
+
+            const user: IUserInfo = ctx.state.user;
+            let originName = path.normalize(ctx.file.originalname);
+            let extName = path.extname(originName);
+            let uploadFileUrl = path.join("/public", "avatar", user.id + extName);
+            let saveFilePath = path.join(rootDIR, "../", uploadFileUrl);
+            let dirName = path.dirname(saveFilePath);
+            if (!fs.existsSync(dirName)) {
+                fs.mkdirSync(path.dirname(saveFilePath));
+            }
+            fs.writeFileSync(saveFilePath, ctx.file.buffer);
+
+            resp.send(ctx, 0, { url: uploadFileUrl });
+        } catch (error) {
+            if (error.message && error.message === "format error") {
+                resp.send(ctx, 1, null, "file format error");
+                return;
+            }
+
+            switch (error.code) {
+                case "LIMIT_FILE_SIZE":
+                    resp.send(ctx, 1, null, "File too large");
+                    return;
+                case "LIMIT_UNEXPECTED_FILE":
+                    resp.send(ctx, 1, null, "unexpected field,upload error");
+                    return;
+
+                default:
+            }
+            resp.send(ctx, 1, null, "upload error");
+            return;
+        }
     }
 }
 

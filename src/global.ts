@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 10:47:59
- * @LastEditTime: 2021-07-09 10:54:52
+ * @LastEditTime: 2021-07-13 09:29:14
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/global.ts
@@ -32,6 +32,9 @@ configure({
     default: { appenders: config.logtypes, level: config.loglevel },
   },
 
+  pm2: process.env.NODE_ENV === 'production', //if run with PM2 in production
+  pm2InstanceVar: 'INSTANCE_ID',
+  
   disableClustering: true,
 });
 

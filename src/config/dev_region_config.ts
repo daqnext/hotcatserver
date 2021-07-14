@@ -1,15 +1,16 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 10:47:59
- * @LastEditTime: 2021-07-09 10:43:53
+ * @LastEditTime: 2021-07-13 09:37:53
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/config/dev_config.ts
  */
+import moment from 'moment'
 module.exports = {
   //log-level
   loglevel:'DEBUG',
-  logfilename:'dev.log',
+  logfilename:"dev-"+moment().format('YYYY-MM-DD') + '.log',
   logtypes:['console', 'file'],
   /// server port 
   port: 6000,
@@ -31,8 +32,16 @@ module.exports = {
   //cache
   cache_prefix:'hotcat_dev_',
 
+  //serverType: "center"|"region"
+  serverType:'region',
+
+  //run env:"production"|"develop"
+  node_env:"develop",
+
   //centerHost
-  center_host:"http://localhost:7000"
+  center_host:"http://localhost:7000",
+  
+  //region login
   
 };
 

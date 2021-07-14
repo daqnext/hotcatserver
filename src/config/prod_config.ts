@@ -1,7 +1,16 @@
+/*
+ * @Author: your name
+ * @Date: 2021-07-07 10:47:59
+ * @LastEditTime: 2021-07-13 09:37:02
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: /hotcatserver/src/config/prod_config.ts
+ */
+import moment from 'moment'
 module.exports = {
   //log-level
   loglevel:'DEBUG',
-  logfilename:'prod.log',
+  logfilename:"prod-"+moment().format('YYYY-MM-DD') + '.log',
   logtypes:['console','file'],
   /// server port 
   port: 80,

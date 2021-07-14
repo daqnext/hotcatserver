@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 15:19:51
- * @LastEditTime: 2021-07-08 17:11:42
+ * @LastEditTime: 2021-07-12 09:55:14
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/common/auth.ts

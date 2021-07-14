@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-09 08:50:53
- * @LastEditTime: 2021-07-09 09:12:33
+ * @LastEditTime: 2021-07-13 11:55:18
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/router/router.ts
@@ -25,42 +25,29 @@ const koaLogger = koa_logger((str) => {
 class AppRouter {
     // app:koa<koa.DefaultState, koa.DefaultContext>=null
     // router:router=null
-    
-    async preprocess(ctx: koa.Context, next: koa.Next) {
+
+    static async preprocess(ctx: koa.Context, next: koa.Next) {
         //console.log("preprocess-start");
         await next();
         //console.log("preprocess-back");
     }
 
-    async postprocess(ctx: koa.Context, next: koa.Next) {
+    static async postprocess(ctx: koa.Context, next: koa.Next) {
         //console.log("postprocess-start");
         await next();
         //console.log("postprocess-back");
     }
 
-    async afterprocess() {}
+    static async afterprocess() {}
 
-    init(controllerPath:string) {
+    static GenRouter(controllerPath: string) {
         const App = new koa({
             proxy: true,
             proxyIpHeader: "X-Real-IP",
         });
         const Router = new router();
 
-        fs.readdir(controllerPath, (err, files) => {
-            //no any controller do nothing
-            if (files == null || files.length == 0) {
-                console.error("no any controller file server won't start ");
-                return;
-            }
-
-            //initialize all the controllers
-            files.forEach((file) => {
-                const filePath=path.join(controllerPath,file)
-                require(filePath).init(Router);
-            });
-
-            App.use(koaLogger);
+        App.use(koaLogger);
 
             //initialize the error handler
             App.use(async (ctx, next) => {
@@ -84,10 +71,11 @@ class AppRouter {
             //cross
             App.use(
                 cors({
-                    credentials: true, //是否允许发送Cookie
+                    credentials: true, 
                 })
             );
 
+        
             App.use(
                 bodyParser({
                     onerror: function (err, ctx) {
@@ -100,12 +88,31 @@ class AppRouter {
             App.use(Router.routes()).use(Router.allowedMethods());
             //App.use(AppRouter.postprocess);
 
-            //start the server
-            App.listen(config.port, () => {
-                //console.log('asdfasf');
-                console.info("The application is listening on port : ", config.port);
+        try {
+            let files = fs.readdirSync(controllerPath);
+            //no any controller do nothing
+            if (files == null || files.length == 0) {
+                console.error("no any controller file server won't start ");
+                return;
+            }
+
+            //initialize all the controllers
+            files.forEach((file) => {
+                const filePath = path.join(controllerPath, file);
+                require(filePath).init(Router);
             });
-        });
+            
+        } catch (error) {
+            console.error("no any controller file server won't start ");
+            return;
+        }
+
+        return App;
+        //start the server
+        // App.listen(config.port, () => {
+        //     //console.log('asdfasf');
+        //     console.info("The application is listening on port : ", config.port);
+        // });
     }
 }
 
