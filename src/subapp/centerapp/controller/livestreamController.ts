@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:04:26
- * @LastEditTime: 2021-07-13 15:23:30
+ * @LastEditTime: 2021-07-15 15:47:07
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/livestreamController.ts
@@ -23,6 +23,8 @@ import { livestreamManager } from "../../../manager/project/livestreamManager";
 import { IUserInfo } from "../../../interface/interface";
 import { ipRegionInfo } from "../../../manager/project/ipRegionInfo";
 import { liveServerManager } from "../../../manager/project/liveserverManager";
+import { config } from "../../../config/conf";
+import { requestTool } from "../../../utils/request";
 
 const upload = multer({
     limits: {
@@ -64,41 +66,114 @@ class livestreamController {
     async createLivestream(ctx: koa.Context, next: koa.Next) {
         const msg: ICreateLivestreamMsg = ctx.request.body;
         console.log(msg);
-        const user:IUserInfo=ctx.state.user
+        const user: IUserInfo = ctx.state.user;
         console.log(user);
 
         //user ip
-        const ip:string=Utils.getRequestIP(ctx.request)
-        const ipInfo=ipRegionInfo.getIpInfo(ip)
+        const ip: string = Utils.getRequestIP(ctx.request);
+        const ipInfo = ipRegionInfo.getIpInfo(ip);
 
         //liveServer
-        const liveServer=await liveServerManager.GetAliveLiveServerWithUpLevelRegionBackup(ipInfo.region,ipInfo.continent,ipInfo.country)
-        if (liveServer==null) {
-            resp.send(ctx,1,null,"no active live server")
-            return
+        const liveServer = await liveServerManager.GetAliveLiveServerWithUpLevelRegionBackup(
+            ipInfo.region,
+            ipInfo.continent,
+            ipInfo.country
+        );
+        if (liveServer == null) {
+            resp.send(ctx, 1, null, "no active live server");
+            return;
         }
 
-        const {livestream,errMsg}=await livestreamManager.CreateLiveStream(user.id,user.name,msg.streamName,liveServer.ip,msg.coverImgUrl)
-        if (livestream==null) {
-            resp.send(ctx,1,null,errMsg)
-            return
+        const { livestream, errMsg } = await livestreamManager.CreateLiveStream(
+            user.id,
+            user.name,
+            msg.streamName,
+            msg.subTitle,
+            msg.description,
+            msg.category,
+            liveServer.deviceId,
+            msg.coverImgUrl
+        );
+        if (livestream == null) {
+            resp.send(ctx, 1, null, errMsg);
+            return;
         }
-        
-        const backData={
-            rtmpUrl:"rtmp://"+livestream.liveServerAddress+"/live/"+user.id+"/"+livestream.name+"?secret="+livestream.streamKey,
-            playbackUrl:"",
+        const streamUrl = await livestreamManager.GetLiveStreamUrl(
+            livestream.liveServerId,
+            livestream.userId,
+            livestream.id,
+            livestream.streamKey
+        );
+        if (streamUrl === null) {
+            await livestreamManager.DeleteLiveStream(livestream.id, livestream.streamKey);
+            resp.send(ctx, 1, null, "no active live server");
+            return;
         }
 
-        resp.send(ctx,0,backData)
+        //create bindDomain in cdn
+        const requestUrl = config.cdn_host + "/api/v1/admin/hotcat/createlivebinddomain";
+        const sendData = {
+            userName: user.name,
+            id: user.id,
+            bindName: livestream.id + "",
+            originUrl: streamUrl.originM3u8Link,
+        };
+
+        const cdnBindDomain = await requestTool.post(requestUrl, sendData, {
+            headers: {
+                Accept: "application/json",
+                Authorization: "Basic " + config.cdn_requestToken,
+            },
+        });
+        console.log(cdnBindDomain);
+        if (cdnBindDomain.status !== 0) {
+            //delete created livestream
+            await livestreamManager.DeleteLiveStream(livestream.id, livestream.streamKey);
+            resp.send(ctx, 1, null, "create cdn bindDomain error");
+            return;
+        }
+
+        const streamInfo = {
+            id: livestream.id,
+            name: livestream.name,
+            subTitle: livestream.subTitle,
+            description: livestream.description,
+            userId: livestream.userId,
+            userName: livestream.userName,
+            streamKey: livestream.streamKey,
+            status: livestream.status,
+            duration: livestream.duration,
+            createTimeStamp: livestream.createTimeStamp,
+            startTimeStamp: livestream.startTimeStamp,
+            endTimeStamp: livestream.endTimeStamp,
+            rtmpLink: streamUrl.rtmpLink,
+            originM3u8Link: streamUrl.originM3u8Link,
+            cdnM3u8Link: streamUrl.cdnM3u8Link,
+            coverImgUrl: livestream.coverImgUrl,
+        };
+
+        resp.send(ctx, 0, streamInfo);
     }
 
     async deleteLivestream(ctx: koa.Context, next: koa.Next) {
         const msg: IDeleteLivestreamMsg = ctx.request.body;
         console.log(msg);
-        
-        const success=await livestreamManager.DeleteLiveStream(msg.streamId,msg.streamKey)
 
-        resp.send(ctx,0)
+        const success = await livestreamManager.DeleteLiveStream(msg.streamId, msg.streamKey);
+        //delete bindDomain in cdn
+        const requestUrl = config.cdn_host + "/api/v1/admin/hotcat/deletelivebinddomain";
+        const sendData = {
+            bindName: msg.streamId + "",
+        };
+
+        const cdnBindDomain = await requestTool.post(requestUrl, sendData, {
+            headers: {
+                Accept: "application/json",
+                Authorization: "Basic " + config.cdn_requestToken,
+            },
+        });
+
+        resp.send(ctx, 0);
     }
 
     async getLivestream(ctx: koa.Context, next: koa.Next) {

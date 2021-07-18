@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-12 11:44:38
- * @LastEditTime: 2021-07-13 13:35:38
+ * @LastEditTime: 2021-07-15 15:19:53
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/subapp/centerapp/controller/liveserverController.ts
@@ -49,7 +49,8 @@ class liveserverController {
             heartBeatTimeStamp:moment.now(),
             deviceId:device_id,
             spaceTotal:0,
-            spaceFree:0
+            spaceFree:0,
+            status:"ON"
         }
         liveServerManager.UpdateLiveServerInfo(serverInfo)
         

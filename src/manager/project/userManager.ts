@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 10:47:59
- * @LastEditTime: 2021-07-13 15:39:49
+ * @LastEditTime: 2021-07-15 10:28:23
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/userManager.ts
@@ -46,8 +46,6 @@ class userManager {
                 return { user: null, errMsg: "email already exist" };
             }
 
-            //create user in meson
-
             user = await userModel.create<userModel>({
                 cookie: userManager.genCookie(),
                 name: registerInfo.userName,
@@ -61,6 +59,19 @@ class userManager {
         } catch (error) {
             console.error("create new user error", error);
             return { user: null, errMsg: error };
+        }
+    }
+
+    public static async deleteUser(id:number){
+        try {
+            const number=await userModel.destroy({where:{id:id}})
+            if (number>0) {
+                return true
+            }
+            return false
+        } catch (error) {
+            console.error("delete user error", error, "id:",id);
+            return false
         }
     }
 

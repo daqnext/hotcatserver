@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 14:19:10
- * @LastEditTime: 2021-07-13 12:24:56
+ * @LastEditTime: 2021-07-15 12:36:42
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/model/livestreamModel.ts
@@ -22,16 +22,16 @@ class livestreamModel extends Model implements ILiveStream {
     category: string;
     userId: number;
     userName: string;
-    liveServerAddress:string;
+    liveServerId: string;
     streamKey: string;
     status: ELiveStreamStatus;
     duration: number; //second
     createTimeStamp: number;
     startTimeStamp: number;
     endTimeStamp: number;
-    trmpLink: string;
-    originM3u8Link: string;
-    cdnM3u8Link: string;
+    // rtmpLink: string;
+    // originM3u8Link: string;
+    // cdnM3u8Link: string;
     coverImgUrl: string;
 }
 
@@ -44,6 +44,9 @@ livestreamModel.init(
             primaryKey: true,
             allowNull: false,
         },
+        subTitle: { type: DataTypes.STRING(255), allowNull: false },
+        description: { type: DataTypes.STRING(255), allowNull: false },
+        category: { type: DataTypes.STRING(32), allowNull: false },
         name: {
             type: DataTypes.STRING(32),
             allowNull: false,
@@ -56,7 +59,7 @@ livestreamModel.init(
             type: DataTypes.STRING(32),
             allowNull: false,
         },
-        liveServerAddress: {
+        liveServerId: {
             type: DataTypes.STRING(32),
             allowNull: false,
         },
@@ -75,26 +78,30 @@ livestreamModel.init(
             defaultValue: 0,
         },
         createTimeStamp: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.BIGINT,
             defaultValue: 0,
         },
         startTimeStamp: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.BIGINT,
             defaultValue: 0,
         },
         endTimeStamp: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.BIGINT,
             defaultValue: 0,
         },
-        rtmpLink: {
-            type: DataTypes.STRING(255),
-            allowNull: false,
-        },
-        originM3u8Link: {
-            type: DataTypes.STRING(255),
-            allowNull: false,
-        },
-        cdnM3u8Link: {
+        // rtmpLink: {
+        //     type: DataTypes.STRING(255),
+        //     allowNull: false,
+        // },
+        // originM3u8Link: {
+        //     type: DataTypes.STRING(255),
+        //     allowNull: false,
+        // },
+        // cdnM3u8Link: {
+        //     type: DataTypes.STRING(255),
+        //     allowNull: false,
+        // },
+        coverImgUrl: {
             type: DataTypes.STRING(255),
             allowNull: false,
         },

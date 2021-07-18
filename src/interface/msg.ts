@@ -1,15 +1,20 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 11:38:23
- * @LastEditTime: 2021-07-13 15:00:41
+ * @LastEditTime: 2021-07-16 23:51:07
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/interface/user.ts
  */
 
-export type IUserRegisterMsg = {
+export interface IUserGetEmailVCodeMsg{
+    email:string
+}
+
+export interface IUserRegisterMsg  {
     userName: string;
     email: string;
+    vCode:string;
     passwd: string;
     captcha: string;
     captchaId: string;
@@ -24,7 +29,10 @@ export interface IUserLoginMsg {
 
 export interface ICreateLivestreamMsg {
     streamName: string;
-    coverImgUrl:string;
+    subTitle: string;
+    description: string;
+    category: string;
+    coverImgUrl: string;
     captcha: string;
     captchaId: string;
 }

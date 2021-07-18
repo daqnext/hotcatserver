@@ -8,7 +8,10 @@
 /.vscode
 /node_modules
 
-
+src/config/dev_center_config.ts
+src/config/dev_region_config.ts
+src/config/dev_config.ts
 src/config/dev_config.ts
 src/config/prod_config.ts
+src/test/
 public/

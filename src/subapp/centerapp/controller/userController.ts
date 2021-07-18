@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 11:34:52
- * @LastEditTime: 2021-07-09 18:31:48
+ * @LastEditTime: 2021-07-17 12:47:49
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/userController.ts
@@ -9,7 +9,7 @@
 import koa from "koa";
 import router from "koa-router";
 import { IUserInfo } from "../../../interface/interface";
-import { IUserLoginMsg, IUserRegisterMsg } from "../../../interface/msg";
+import { IUserGetEmailVCodeMsg, IUserLoginMsg, IUserRegisterMsg } from "../../../interface/msg";
 import { auth } from "../../../manager/common/auth";
 import { userManager } from "../../../manager/project/userManager";
 import { Utils } from "../../../utils/utils";
@@ -19,6 +19,9 @@ import path from "path";
 import { rootDIR } from "../../../global";
 import randomString from "string-random";
 import { resp } from "../../../utils/resp";
+import { requestTool } from "../../../utils/request";
+import { config } from "../../../config/conf";
+import { emailVerifyManager } from "../../../manager/project/emailVerifyManager";
 
 const upload = multer({
     limits: {
@@ -42,6 +45,8 @@ class userController {
         //config all the get requests
         Router.post("/api/user/register", C.userRegister);
         Router.post("/api/user/login", C.userLogin);
+        Router.get("/api/user/userinfo",auth.ParseTokenMiddleware(),C.userGetUserInfo)
+        Router.post("/api/user/getemailvcode",C.userGetEmailVcode)
 
         Router.post("/api/user/uploadavatar", auth.ParseTokenMiddleware(), C.handleUploadAvatar);
 
@@ -83,6 +88,21 @@ class userController {
             return;
         }
 
+        const name = msg.userName.toLowerCase();
+        if (
+            name === "admin" ||
+            name === "administrator" ||
+            name === "finance" ||
+            name === "contact"
+        ) {
+            ctx.body = {
+                status: 1,
+                data: null,
+                msg: "user name already exist",
+            };
+            return;
+        }
+
         const { user, errMsg } = await userManager.createNewUser(msg);
         if (
             user === null &&
@@ -113,7 +133,28 @@ class userController {
             permission: user.permission,
             created: user.created,
         };
-        console.log(user);
+
+        //create user in cdn
+        const cdnUrl = config.cdn_host + "/api/v1/admin/hotcat/createliveaccuser";
+        console.log(cdnUrl);
+        
+        const sendData = {
+            userName: user.name,
+            id: user.id,
+        };
+        const cdnUserInfo=await requestTool.post(cdnUrl,sendData,{headers:{
+            Accept:        "application/json",
+		    Authorization: "Basic " + config.cdn_requestToken,
+        }});
+        if (cdnUserInfo.status!==0) {
+            //delete created user
+            await userManager.deleteUser(user.id)
+            resp.send(ctx,1,null,"create cdn user error,please try later")
+            return
+        }
+        
+        console.log(cdnUserInfo);
+        //console.log(user);
         console.log(userInfo);
 
         ctx.body = {
@@ -199,6 +240,23 @@ class userController {
             status: 0,
             data: userInfo,
         };
+    }
+
+    async userGetUserInfo(ctx: koa.Context, next: koa.Next){
+        const user: IUserInfo = ctx.state.user;
+        resp.send(ctx,0,user,null)
+    }
+
+    async userGetEmailVcode(ctx: koa.Context, next: koa.Next){
+        const msg: IUserGetEmailVCodeMsg = ctx.request.body;
+        console.log(msg);
+        
+        const {success,err}=await emailVerifyManager.GenEmailVCode(msg.email)
+        if (!success) {
+            resp.send(ctx,1,null,err)
+            return
+        }
+        resp.send(ctx,0)
     }
 
     async handleUploadAvatar(ctx: koa.Context, next: koa.Next) {

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 15:19:51
- * @LastEditTime: 2021-07-12 09:55:14
+ * @LastEditTime: 2021-07-15 09:43:50
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/common/auth.ts
@@ -16,7 +16,7 @@ class auth{
             const token=ctx.request.header["authorization"]
             if (!token&&passthrough==false) {
                 ctx.body={
-                    status:0,
+                    status:1,
                     msg:"no auth"
                 }
                 return
@@ -27,7 +27,7 @@ class auth{
                 const {user}=await userManager.getUserByCookie(userToken)
                 if (user===null&&passthrough==false) {
                 ctx.body={
-                    status:0,
+                    status:1,
                     msg:"no auth"
                 }
                 return
@@ -45,7 +45,7 @@ class auth{
             const user:IUserInfo=ctx.state.user
             if (!user) {
                 ctx.body={
-                    status:0,
+                    status:1,
                     msg:"user not exist"
                 }
                 return
@@ -62,7 +62,7 @@ class auth{
             }
             if (!havePermission) {
                 ctx.body={
-                    status:0,
+                    status:1,
                     msg:"no auth"
                 }
                 return

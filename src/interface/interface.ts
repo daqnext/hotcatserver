@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 09:09:21
- * @LastEditTime: 2021-07-13 12:25:10
+ * @LastEditTime: 2021-07-15 15:19:11
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/interface/interface.ts
@@ -36,26 +36,27 @@ export interface ILiveStream {
     description:string;
     userId: number;
     userName: string;
-    streamKey: string;
-    liveServerAddress:string;
+    streamKey?: string;
+    liveServerId?:string;
     status: ELiveStreamStatus;
     duration: number; //second
     createTimeStamp: number;
     startTimeStamp: number;
     endTimeStamp: number;
-    trmpLink: string;
-    originM3u8Link: string;
-    cdnM3u8Link: string;
+    rtmpLink?: string;
+    originM3u8Link?: string;
+    cdnM3u8Link?: string;
     coverImgUrl:string;
 }
 
 export interface ILiveServerInfo{
+    deviceId:string,
     ip:string,
     ipInfo:IIpInfo,
     heartBeatTimeStamp:number,
-    deviceId:string,
     spaceTotal:number,
     spaceFree:number,
+    status:"ON"|"DOWN"
 }
 
 export interface ICategory{

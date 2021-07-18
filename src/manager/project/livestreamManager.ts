@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 12:24:01
- * @LastEditTime: 2021-07-13 15:42:16
+ * @LastEditTime: 2021-07-15 14:31:43
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/livestreamManager.ts
@@ -10,14 +10,20 @@
 import { livestreamModel } from "../../model/livestreamModel";
 import randomString from "string-random";
 import moment from "moment";
+import { logger } from "../../global";
+import { SqlTool } from "../../db/SqlTool";
+import { liveServerManager } from "./liveserverManager";
 
 class livestreamManager {
     static async CreateLiveStream(
         userId: number,
         userName: string,
         streamName: string,
-        liveServerAddress: string,
-        coverImgUrl:string,
+        subTitle: string,
+        description: string,
+        category: string,
+        liveServerId: string,
+        coverImgUrl: string
     ): Promise<{ livestream: livestreamModel; errMsg: string }> {
         try {
             //rand streamKey
@@ -32,7 +38,7 @@ class livestreamManager {
                 let livestream = await livestreamModel.findOne({
                     where: { streamKey: streamKey },
                 });
-                if ((livestream = null)) {
+                if (livestream == null) {
                     ok = true;
                     break;
                 }
@@ -41,25 +47,24 @@ class livestreamManager {
                 return { livestream: null, errMsg: "key duplicated" };
             }
 
-            //create bindDomain in meson
-            
-
-            //createInRedis
             let livestream = await livestreamModel.create({
                 name: streamName,
                 userId: userId,
                 userName: userName,
-                liveServerAddress: liveServerAddress,
+                subTitle: subTitle,
+                description: description,
+                category: category,
+                liveServerId: liveServerId,
                 streamKey: streamKey,
                 status: "ready",
                 duration: 0,
                 createTimeStamp: moment.now(),
                 startTimeStamp: 0,
                 endTimeStamp: 0,
-                rtmpLink: "rtmp://"+liveServerAddress+"/live/"+userId+"/"+streamName+"?secret="+streamKey,
-                originM3u8Link: "http://"+liveServerAddress+":8080/live/"+userId+"/"+streamName+"/stream.m3u8",
-                cdnM3u8Link: "/m3u8/playlist/:liveBindName/:m3u8FileName",
-                coverImgUrl:coverImgUrl,
+                // rtmpLink: "rtmp://"+liveServerAddress+"/live/"+userId+"/"+newId+"?secret="+streamKey,
+                // originM3u8Link: "http://"+liveServerAddress+":8080/live/"+userId+"/"+newId+"/playlist.m3u8",
+                // cdnM3u8Link: "/api/livecdn/m3u8/playlist/live_"+newId+"/playlist.m3u8",
+                coverImgUrl: coverImgUrl,
             });
 
             return { livestream: livestream, errMsg: "" };
@@ -67,6 +72,39 @@ class livestreamManager {
             console.error("create new live stream", error);
             return { livestream: null, errMsg: error };
         }
+    }
+
+    static async GetLiveStreamUrl(
+        liveServerId: string,
+        userId: number,
+        liveStreamId: number,
+        streamSecret: string
+    ) {
+        const serverInfo = await liveServerManager.GetLiveServerByDeviceId(liveServerId);
+        if (serverInfo === null) {
+            return null;
+        }
+
+        return {
+            rtmpLink:
+                "rtmp://" +
+                serverInfo.ip +
+                "/live/" +
+                userId +
+                "/" +
+                liveStreamId +
+                "?secret=" +
+                streamSecret,
+            originM3u8Link:
+                "http://" +
+                serverInfo.ip +
+                ":8080/live/" +
+                userId +
+                "/" +
+                liveStreamId +
+                "/playlist.m3u8",
+            cdnM3u8Link: "/api/livecdn/m3u8/playlist/live_" + liveStreamId + "/playlist.m3u8",
+        };
     }
 
     static async GetLiveStreams(
@@ -91,16 +129,25 @@ class livestreamManager {
         }
     }
 
-    static async DeleteLiveStream(streamId:number,streamKey:string):Promise<boolean>{
+    static async DeleteLiveStream(streamId: number, streamKey: string): Promise<boolean> {
         try {
-            const number=await livestreamModel.destroy({where:{id:streamId,streamKey:streamKey}})
-            if (number>0) {
-                return true
+            const number = await livestreamModel.destroy({
+                where: { id: streamId, streamKey: streamKey },
+            });
+            if (number > 0) {
+                return true;
             }
-            return false
+            return false;
         } catch (error) {
-            console.error("delete live stream error", error, "id:",streamId,"streamKey:",streamKey);
-            return false
+            console.error(
+                "delete live stream error",
+                error,
+                "id:",
+                streamId,
+                "streamKey:",
+                streamKey
+            );
+            return false;
         }
     }
 

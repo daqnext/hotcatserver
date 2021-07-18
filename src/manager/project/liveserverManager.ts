@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-12 11:02:01
- * @LastEditTime: 2021-07-13 12:13:58
+ * @LastEditTime: 2021-07-15 15:25:15
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/project/liveserverManager.ts
@@ -51,25 +51,25 @@ class liveServerManager {
             if (!tempMap[AliveServerPrefix + "global"]) {
                 tempMap[AliveServerPrefix + "global"] = [];
             }
-            tempMap[AliveServerPrefix + "global"].push(info.ip);
+            tempMap[AliveServerPrefix + "global"].push(info.deviceId);
 
             //region
             if (!tempMap[AliveServerPrefix + info.ipInfo.region]) {
                 tempMap[AliveServerPrefix + info.ipInfo.region] = [];
             }
-            tempMap[AliveServerPrefix + info.ipInfo.region].push(info.ip);
+            tempMap[AliveServerPrefix + info.ipInfo.region].push(info.deviceId);
 
             //continent
             if (!tempMap[AliveServerPrefix + info.ipInfo.continent]) {
                 tempMap[AliveServerPrefix + info.ipInfo.continent] = [];
             }
-            tempMap[AliveServerPrefix + info.ipInfo.continent].push(info.ip);
+            tempMap[AliveServerPrefix + info.ipInfo.continent].push(info.deviceId);
 
             //country
             if (!tempMap[AliveServerPrefix + info.ipInfo.country]) {
                 tempMap[AliveServerPrefix + info.ipInfo.country] = [];
             }
-            tempMap[AliveServerPrefix + info.ipInfo.country].push(info.ip);
+            tempMap[AliveServerPrefix + info.ipInfo.country].push(info.deviceId);
         }
 
         let redisMulti = redisTool.getSingleInstance().redis.multi();
@@ -87,9 +87,9 @@ class liveServerManager {
         try {
             redisTool
                 .getSingleInstance()
-                .redis.zadd(UploadServer_zset, info.heartBeatTimeStamp, info.ip);
+                .redis.zadd(UploadServer_zset, info.heartBeatTimeStamp, info.deviceId);
 
-            const field = info.ip;
+            const field = info.deviceId;
             const str = JSON.stringify(info);
             redisTool.getSingleInstance().redis.hset(LiveServerInfo_hash, field, str);
         } catch (error) {
@@ -97,21 +97,42 @@ class liveServerManager {
         }
     }
 
-    static async GetLiveServerByIp(ip: string): Promise<ILiveServerInfo> {
+    static async GetLiveServerByDeviceId(deviceId: string): Promise<ILiveServerInfo> {
         try {
-            const infoStr = await redisTool.getSingleInstance().redis.hget(LiveServerInfo_hash, ip);
+            const infoStr = await redisTool.getSingleInstance().redis.hget(LiveServerInfo_hash, deviceId);
             if (infoStr === "") {
                 return null;
             }
             const info: ILiveServerInfo = JSON.parse(infoStr);
+            if (info.heartBeatTimeStamp<moment.now()-130*1000) {
+                info.status="DOWN"
+            }
             return info;
         } catch (error) {
-            console.error("GetLiveServerByIp error:", error, "ip:", ip);
+            console.error("GetLiveServerByIp error:", error, "deviceId:", deviceId);
             return null;
         }
     }
 
-    static GetAliveLiveServer() {}
+    static async GetAllLiveServer() {
+        try {
+            const liveServers:ILiveServerInfo[]=[]
+            const nowTime=moment.now()
+            const timeLimit = nowTime- 130*1000;
+            const serverInfoStr=await redisTool.getSingleInstance().redis.hgetall(LiveServerInfo_hash)
+            for (const key in serverInfoStr) {
+                const info: ILiveServerInfo = JSON.parse(serverInfoStr[key]);
+                if (info.heartBeatTimeStamp<timeLimit) {
+                    info.status="DOWN"
+                }
+                liveServers.push(info)
+            }
+            return liveServers
+        } catch (error) {
+            console.error("GetAllLiveServer error:",error);
+            return null
+        }
+    }
 
     static async GetAliveLiveServerWithUpLevelRegionBackup(
         region: ERegion,
@@ -123,19 +144,25 @@ class liveServerManager {
         const regionKey = AliveServerPrefix + region;
         const globalKey = AliveServerPrefix + "global";
         const keys = [countryKey, continentKey, regionKey, globalKey];
-        let serverIp = "";
+        let serverDeviceId = "";
         for (let i = 0; i < keys.length; i++) {
-            const ips = await redisTool.getSingleInstance().redis.smembers(keys[i]);
-            if (ips.length <= 0) {
+            let ids = await redisTool.getSingleInstance().redis.smembers(keys[i]);
+            if (ids.length <= 0) {
                 continue;
             }
-            const index = _.random(ips.length - 1);
-            serverIp = ips[index];
+            if (continent==="Asia"&&country!=="China") {
+                const cIds=await redisTool.getSingleInstance().redis.smembers(AliveServerPrefix+"China");
+                if (ids.length>cIds.length) {
+                    ids=_.without(ids,...cIds)
+                } 
+            }
+            const index = _.random(ids.length - 1);
+            serverDeviceId = ids[index];
         }
-        if (serverIp === "") {
+        if (serverDeviceId === "") {
             return null;
         }
-        const info = await this.GetLiveServerByIp(serverIp);
+        const info = await this.GetLiveServerByDeviceId(serverDeviceId);
         return info;
     }
 }

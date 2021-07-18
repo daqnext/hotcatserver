@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:58:13
- * @LastEditTime: 2021-07-13 15:47:49
+ * @LastEditTime: 2021-07-17 16:09:57
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/srsNotifyController.ts
@@ -40,12 +40,12 @@ class srsNotifyController {
         const msg:IStreamOnPublishMsg=ctx.request.body
         console.log(msg);
 
-        const param = queryString.parse(msg.param);
-        const secret = param.secret as string
-        if (!secret) {
-            ctx.body = 1;
-            return
-        }
+        // const param = queryString.parse(msg.param);
+        // const secret = param.secret as string
+        // if (!secret) {
+        //     ctx.body = 1;
+        //     return
+        // }
 
         // const {livestream}=await livestreamManager.GetLiveStreamByKey(secret)
         // if (!livestream) {
@@ -53,12 +53,14 @@ class srsNotifyController {
         //     return
         // }
 
-        ctx.body = 0;
+        ctx.status=200
+        ctx.body=0
     }
 
     async onUnPublish(ctx: koa.Context, next: koa.Next) {
         const msg:IStreamOnPublishMsg=ctx.request.body
         console.log(msg);
+        ctx.status=200
         ctx.body = 0;
     }
 }

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-09 10:40:53
- * @LastEditTime: 2021-07-12 09:49:31
+ * @LastEditTime: 2021-07-17 13:14:43
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/subapp/regionapp/controller/userController.ts
@@ -17,6 +17,8 @@ class userController {
         //config all the get requests
         Router.post("/api/user/register", proxy(config.center_host, {}));
         Router.post("/api/user/login", proxy(config.center_host, {}));
+        Router.get("/api/user/userinfo",proxy(config.center_host, {}))
+        Router.post("/api/user/getemailvcode",proxy(config.center_host, {}))
         Router.post("/api/user/uploadavatar", proxy(config.center_host, {}));
 
         //config all the post requests
