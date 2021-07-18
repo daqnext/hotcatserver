@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 11:38:23
- * @LastEditTime: 2021-07-16 23:51:07
+ * @LastEditTime: 2021-07-18 20:57:29
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/interface/user.ts
@@ -43,6 +43,10 @@ export interface IDeleteLivestreamMsg {
 }
 
 export interface IGetLivestreamMsg {
+    id:number
+}
+
+export interface IQueryLivestreamMsg{
     limit: number;
     offset: number;
 }

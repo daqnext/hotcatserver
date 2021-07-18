@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:04:26
- * @LastEditTime: 2021-07-15 15:47:07
+ * @LastEditTime: 2021-07-18 21:02:19
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/livestreamController.ts
@@ -48,13 +48,11 @@ class livestreamController {
         //config all the get requests
         Router.post("/api/livestream/create", auth.ParseTokenMiddleware(), C.createLivestream);
         Router.post("/api/livestream/delete", auth.ParseTokenMiddleware(), C.deleteLivestream);
-        Router.post("/api/livestream/get", auth.ParseTokenMiddleware(), C.getLivestream);
-
-        Router.post(
-            "/api/livestream/uploadcover",
-            auth.ParseTokenMiddleware(),
-            C.handleUploadCover
-        );
+        Router.post("/api/livestream/get", C.getLivestream);
+        Router.post("/api/livestream/query",auth.ParseTokenMiddleware(), C.queryLivestream)
+        
+        //uploadcover
+        Router.post("/api/livestream/uploadcover",auth.ParseTokenMiddleware(),C.handleUploadCover);
 
         //watching
         Router.get("/api/livestream/watching/:streamId", C.watching);
@@ -177,11 +175,22 @@ class livestreamController {
     }
 
     async getLivestream(ctx: koa.Context, next: koa.Next) {
-        const msg: ICreateLivestreamMsg = ctx.request.body;
-        console.log(msg);
-        console.log(ctx.state.user);
+        const {id}:{id:number} = ctx.request.body;
+        if (id===null) {
+            resp.send(ctx,1,null,"no program info")
+            return
+        }
 
-        ctx.body = ctx.state.user;
+        const {livestream,errMsg}=await livestreamManager.GetLiveStreamById(id)
+        if (livestream===null) {
+            resp.send(ctx,1,null,"no program info")
+            return
+        }
+        resp.send(ctx,0,livestream,null)
+    }
+
+    async queryLivestream(ctx: koa.Context, next: koa.Next){
+        
     }
 
     async watching(ctx: koa.Context, next: koa.Next) {

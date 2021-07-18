@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-16 22:42:40
- * @LastEditTime: 2021-07-17 13:23:49
+ * @LastEditTime: 2021-07-18 13:00:33
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/project/emailVerify.ts
@@ -89,7 +89,7 @@ class emailVerifyManager {
             return { success: false, err: "fail to send email" };
         }
         //start cooldown
-        await redisTool.getSingleInstance().redis.set(coolDownKey, "1", "EX", 60);
+        await redisTool.getSingleInstance().redis.set(coolDownKey, "1", "EX", 55);
         return { success: true, err: null };
     }
 

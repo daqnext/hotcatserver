@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 12:24:01
- * @LastEditTime: 2021-07-15 14:31:43
+ * @LastEditTime: 2021-07-18 20:59:13
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/livestreamManager.ts
@@ -167,7 +167,14 @@ class livestreamManager {
         streamId: number
     ): Promise<{ livestream: livestreamModel; errMsg: string }> {
         try {
+            //from redis
+
+            
+            //from db
             const liveStream = await livestreamModel.findByPk(streamId);
+
+            //set to redis
+            
             return { livestream: liveStream, errMsg: "" };
         } catch (error) {
             console.error("query live stream by id error", error, "streamId=", streamId);
