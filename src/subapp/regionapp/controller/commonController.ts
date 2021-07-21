@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-09 10:02:31
- * @LastEditTime: 2021-07-09 15:08:47
+ * @LastEditTime: 2021-07-20 11:18:05
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/subapp/regionapp/controller/commonController.ts
@@ -26,7 +26,7 @@ class commonController {
 
     async getCategory(ctx: koa.Context, next: koa.Next) {
         let{categoryMap, errMsg}=await categoryManager.regionGetAllCategory()
-        if (categoryMap == null) {
+        if (categoryMap === null) {
             resp.send(ctx,1,null,errMsg)
             return;
         }

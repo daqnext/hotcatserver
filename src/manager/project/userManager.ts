@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 10:47:59
- * @LastEditTime: 2021-07-15 10:28:23
+ * @LastEditTime: 2021-07-21 15:36:09
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/userManager.ts
@@ -139,7 +139,9 @@ class userManager {
         //from center
         let url = config.center_host + "/api/region/getuserinfo";
         let data = await requestTool.post(url, { cookie: cookie });
-        if (data.status == 0) {
+        console.log(data);
+        
+        if (data.status === 0) {
             const userInfo: IUserInfo = data.data;
             //setToLocalCache
             userManager.UserLocalCache[cookie] = {
@@ -149,7 +151,7 @@ class userManager {
 
             //setToRedis
             let str = JSON.stringify(userInfo);
-            redisTool.getSingleInstance().redis.set(key, str, "EX", 300);
+            redisTool.getSingleInstance().redis.set(key, str, "EX", 600);
 
             return { user: userInfo, errMsg: "" };
         }
@@ -204,7 +206,7 @@ class userManager {
 
             //setToRedis
             let str = JSON.stringify(userInfo);
-            redisTool.getSingleInstance().redis.set(key, str, "EX", 300);
+            redisTool.getSingleInstance().redis.set(key, str, "EX", 600);
 
             return { user: userInfo, errMsg: "" };
         } catch (error) {

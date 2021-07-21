@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-09 08:50:53
- * @LastEditTime: 2021-07-13 11:55:18
+ * @LastEditTime: 2021-07-21 13:49:03
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/router/router.ts
@@ -40,7 +40,7 @@ class AppRouter {
 
     static async afterprocess() {}
 
-    static GenRouter(controllerPath: string) {
+    static GenRouter(controllerPath: string,allowCors:boolean=true) {
         const App = new koa({
             proxy: true,
             proxyIpHeader: "X-Real-IP",
@@ -69,11 +69,14 @@ class AppRouter {
             });
 
             //cross
-            App.use(
-                cors({
-                    credentials: true, 
-                })
-            );
+            if (allowCors) {
+                App.use(
+                    cors({
+                        credentials: true, 
+                    })
+                );
+            }
+            
 
         
             App.use(
@@ -108,11 +111,6 @@ class AppRouter {
         }
 
         return App;
-        //start the server
-        // App.listen(config.port, () => {
-        //     //console.log('asdfasf');
-        //     console.info("The application is listening on port : ", config.port);
-        // });
     }
 }
 

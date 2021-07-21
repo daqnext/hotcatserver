@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-12 09:30:39
- * @LastEditTime: 2021-07-12 10:19:54
+ * @LastEditTime: 2021-07-21 15:30:57
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/subapp/centerapp/controller/regionRequestController.ts
@@ -22,8 +22,8 @@ class regionRequestController {
         
         //config all the get requests
         Router.post("/api/region/serverlogin",C.regionServerLogin)
-        Router.get("/api/region/getuserinfo",auth.ParseTokenMiddleware(),auth.AuthMiddleware(['admin']), C.regionGetUserInfo);
-        Router.get("/api/region/getcategory",auth.ParseTokenMiddleware(),auth.AuthMiddleware(['admin']), C.regionGetCategory);
+        Router.post("/api/region/getuserinfo", C.regionGetUserInfo);
+        Router.get("/api/region/getcategory", C.regionGetCategory);
 
         //config all the post requests
         return C;
@@ -36,22 +36,24 @@ class regionRequestController {
     async regionGetUserInfo(ctx: koa.Context, next: koa.Next){
         //get post cookie
         const {cookie}=ctx.request.body
+        console.log(cookie);
+        
         const {user,errMsg}=await userManager.centerGetUserByCookie(cookie)
         if (user===null) {
             resp.send(ctx,1,null,errMsg)
             return
         }
-        resp.send(ctx,1,user,null)
+        resp.send(ctx,0,user,null)
         return
     }
 
     async regionGetCategory(ctx: koa.Context, next: koa.Next) {
         const { categoryMap, errMsg } = await categoryManager.centerGetAllCategory();
-        if (categoryMap == null) {
+        if (categoryMap === null) {
             resp.send(ctx,1,null,errMsg)
             return;
         }
-        resp.send(ctx,1,categoryMap,null)
+        resp.send(ctx,0,categoryMap,null)
         return
     }
 }

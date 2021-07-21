@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 11:34:52
- * @LastEditTime: 2021-07-17 12:47:49
+ * @LastEditTime: 2021-07-21 15:20:30
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/userController.ts
@@ -240,6 +240,8 @@ class userController {
             status: 0,
             data: userInfo,
         };
+
+        
     }
 
     async userGetUserInfo(ctx: koa.Context, next: koa.Next){
@@ -279,9 +281,9 @@ class userController {
             }
 
             const user: IUserInfo = ctx.state.user;
-            let originName = path.normalize(ctx.file.originalname);
-            let extName = path.extname(originName);
-            let uploadFileUrl = path.join("/public", "avatar", user.id + extName);
+            //let originName = path.normalize(ctx.file.originalname);
+            //let extName = path.extname(originName);
+            let uploadFileUrl = path.join("/public", "avatar", user.id+"");
             let saveFilePath = path.join(rootDIR, "../", uploadFileUrl);
             let dirName = path.dirname(saveFilePath);
             if (!fs.existsSync(dirName)) {

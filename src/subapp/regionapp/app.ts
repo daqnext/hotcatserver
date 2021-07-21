@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 17:53:55
- * @LastEditTime: 2021-07-13 11:20:00
+ * @LastEditTime: 2021-07-21 14:45:19
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/subapp/regionapp/app.ts
@@ -14,12 +14,12 @@ import { rootDIR } from "../../global";
 import { AppRouter } from "../../router/router";
 import { LogHelper } from "../../utils/logHelper";
 import { ipRegionInfo } from "../../manager/project/ipRegionInfo";
-import { StartScheduleJob } from "./job/job";
+import { InitJob,StartScheduleJob } from "./job/job";
 
 LogHelper.Init();
 console.log("region app start");
 
-ipRegionInfo.init()
+InitJob()
 
 const controllerPath = path.join(rootDIR, "/subapp/regionapp/controller");
 const appRouter = AppRouter.GenRouter(controllerPath);

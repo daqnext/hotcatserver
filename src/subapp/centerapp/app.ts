@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 17:54:00
- * @LastEditTime: 2021-07-13 11:19:51
+ * @LastEditTime: 2021-07-21 15:18:02
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/subapp/centerapp/app.ts
@@ -15,15 +15,16 @@ import { rootDIR } from "../../global";
 import { AppRouter } from "../../router/router";
 import { LogHelper } from "../../utils/logHelper";
 import { ipRegionInfo } from "../../manager/project/ipRegionInfo";
-import { StartScheduleJob } from "./job/job";
+import { InitJob, StartScheduleJob } from "./job/job";
 
 LogHelper.Init();
 console.log("center app start");
 
-ipRegionInfo.init()
+//init job
+InitJob()
 
 const controllerPath = path.join(rootDIR, "/subapp/centerapp/controller");
-const appRouter = AppRouter.GenRouter(controllerPath);
+const appRouter = AppRouter.GenRouter(controllerPath,true);
 
 // /public/* request as staticFile
 appRouter.use(mount("/public", koaStatic(path.join(rootDIR, "../public"),{defer:true})));
@@ -32,4 +33,5 @@ appRouter.listen(config.port,"0.0.0.0", () => {
     console.info("The application is listening on port : ", config.port);
 });
 
+//schedule job
 StartScheduleJob()

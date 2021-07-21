@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 15:19:51
- * @LastEditTime: 2021-07-15 09:43:50
+ * @LastEditTime: 2021-07-21 15:32:56
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/common/auth.ts
@@ -14,6 +14,8 @@ class auth{
     static ParseTokenMiddleware(passthrough:boolean=false){
         return async function(ctx: koa.Context, next: koa.Next){
             const token=ctx.request.header["authorization"]
+            //console.log(token);
+            
             if (!token&&passthrough==false) {
                 ctx.body={
                     status:1,
@@ -25,7 +27,7 @@ class auth{
             if (token) {
                 let userToken=token.split(" ")[1]
                 const {user}=await userManager.getUserByCookie(userToken)
-                if (user===null&&passthrough==false) {
+                if (user===null&&passthrough===false) {
                 ctx.body={
                     status:1,
                     msg:"no auth"

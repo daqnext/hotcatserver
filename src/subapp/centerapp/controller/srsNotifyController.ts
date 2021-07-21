@@ -1,15 +1,16 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:58:13
- * @LastEditTime: 2021-07-17 16:09:57
+ * @LastEditTime: 2021-07-21 13:42:27
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/srsNotifyController.ts
  */
 import koa from "koa";
 import router from "koa-router";
-import queryString from 'query-string'
-import { IStreamOnPublishMsg } from "../../../interface/msg";
+import queryString from "query-string";
+import { ELiveStreamStatus } from "../../../interface/interface";
+import { IStreamOnPublishMsg, IStreamOnUnPublishMsg } from "../../../interface/msg";
 import { livestreamManager } from "../../../manager/project/livestreamManager";
 
 class srsNotifyController {
@@ -37,30 +38,91 @@ class srsNotifyController {
     }
 
     async onPublish(ctx: koa.Context, next: koa.Next) {
-        const msg:IStreamOnPublishMsg=ctx.request.body
+        const msg: IStreamOnPublishMsg = ctx.request.body;
         console.log(msg);
+        // app: 'live',
+        //   flashver: 'FMLE/3.0 (compatible; FMSc/1.0)',
+        //   swfurl: 'rtmp://192.168.56.101/live?secret=asdiwef',
+        //   tcurl: 'rtmp://192.168.56.101/live?secret=asdiwef',
+        //   pageurl: '',
+        //   addr: '192.168.56.1',
+        //   clientid: '1',
+        //   call: 'publish',
+        //   name: '12',
+        //   type: 'live'
 
-        // const param = queryString.parse(msg.param);
-        // const secret = param.secret as string
-        // if (!secret) {
-        //     ctx.body = 1;
-        //     return
-        // }
+        // //for test
+        ctx.status = 200;
+        ctx.body = 0;
+        return
 
-        // const {livestream}=await livestreamManager.GetLiveStreamByKey(secret)
-        // if (!livestream) {
-        //     ctx.body = 1;
-        //     return
-        // }
+        //check id and secret
+        const paramStr=msg.swfurl.split("?")[1]
+        const param = queryString.parse(paramStr);
+        const secret = param.secret as string
+        
+        if (!secret) {
+            ctx.status = 500;
+            ctx.body = 1;
+            return
+        }
+        const streamId=parseInt(msg.name)
+        if (streamId===null) {
+            ctx.status = 500;
+            ctx.body = 1;
+            return
+        }
 
-        ctx.status=200
-        ctx.body=0
+        const {livestream}=await livestreamManager.GetLiveStreamBySecret(secret)
+        if (!livestream) {
+            ctx.status = 500;
+            ctx.body = 1;
+            return
+        }
+
+        if (streamId!==livestream.id) {
+            ctx.status = 500;
+            ctx.body = 1;
+            return
+        }
+
+        //check status
+        if (livestream.status===ELiveStreamStatus.END) {
+            ctx.status = 500;
+            ctx.body = 1;
+            return
+        }
+
+        //modify status
+        livestreamManager.ModifyStreamStatus(streamId,secret,ELiveStreamStatus.ONLIVE)
+
+        ctx.status = 200;
+        ctx.body = 0;
     }
 
     async onUnPublish(ctx: koa.Context, next: koa.Next) {
-        const msg:IStreamOnPublishMsg=ctx.request.body
+        const msg: IStreamOnUnPublishMsg = ctx.request.body;
         console.log(msg);
-        ctx.status=200
+
+        //check id and secret
+        const param = queryString.parse(msg.swfurl);
+        const secret = param.secret as string
+        if (!secret) {
+            ctx.status = 500;
+            ctx.body = 1;
+            return
+        }
+        const streamId=parseInt(msg.name)
+        if (streamId===null) {
+            ctx.status = 500;
+            ctx.body = 1;
+            return
+        }
+
+        //modify status
+        livestreamManager.ModifyStreamStatus(streamId,secret,ELiveStreamStatus.PAUSE)
+
+        ctx.status = 200;
         ctx.body = 0;
     }
 }

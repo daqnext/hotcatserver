@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 14:19:10
- * @LastEditTime: 2021-07-15 12:36:42
+ * @LastEditTime: 2021-07-21 17:32:51
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/model/livestreamModel.ts
@@ -22,17 +22,15 @@ class livestreamModel extends Model implements ILiveStream {
     category: string;
     userId: number;
     userName: string;
-    liveServerId: string;
-    streamKey: string;
+    region: string;
+    secret: string;
     status: ELiveStreamStatus;
     duration: number; //second
     createTimeStamp: number;
     startTimeStamp: number;
     endTimeStamp: number;
-    // rtmpLink: string;
-    // originM3u8Link: string;
-    // cdnM3u8Link: string;
     coverImgUrl: string;
+    watched:number;
 }
 
 livestreamModel.init(
@@ -59,11 +57,11 @@ livestreamModel.init(
             type: DataTypes.STRING(32),
             allowNull: false,
         },
-        liveServerId: {
+        region: {
             type: DataTypes.STRING(32),
             allowNull: false,
         },
-        streamKey: {
+        secret: {
             type: DataTypes.STRING(32),
             allowNull: false,
             unique: true,
@@ -104,6 +102,11 @@ livestreamModel.init(
         coverImgUrl: {
             type: DataTypes.STRING(255),
             allowNull: false,
+        },
+        watched: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
         },
     },
     {

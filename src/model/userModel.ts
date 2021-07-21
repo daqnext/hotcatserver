@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 10:47:59
- * @LastEditTime: 2021-07-12 10:19:15
+ * @LastEditTime: 2021-07-21 15:05:24
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/model/userModel.ts
@@ -21,6 +21,7 @@ class userModel extends Model implements IUserInfo {
   cookie: string;
   permission: string[];
   created:number;
+  // avatarUrl:string;
 }
 
 userModel.init(
@@ -59,7 +60,12 @@ userModel.init(
       type: DataTypes.BIGINT,
       defaultValue:0,
       allowNull: false,
-    }
+    },
+    // avatarUrl:{
+    //   type: DataTypes.STRING,
+    //   defaultValue:"",
+    //   allowNull: false,
+    // }
   },
   {
     underscored: true,
@@ -76,7 +82,7 @@ userModel.init(
 const userModel_createData = async function () {
   await userModel.findOrCreate({
     where: {
-      cookie: userManager.genCookie(),
+      cookie: "fYcFuLYFCf+uZRU2",
       name: "admin",
       email: "admin@hotcat.live",
       password: userManager.genMd5password("abc123"),
@@ -100,6 +106,16 @@ const userModel_createData = async function () {
       name: "leo",
       email: "leo@gmail.com",
       password: userManager.genMd5password("abc123"),
+      created:moment.now(),
+      permission: JSON.stringify([]),
+    },
+  });
+  await userModel.findOrCreate({
+    where: {
+      cookie: "zh76Luk98jNKW3hF",
+      name: "zzb",
+      email: "zhangzhengbo@hotmail.com",
+      password: userManager.genMd5password("123456"),
       created:moment.now(),
       permission: JSON.stringify([]),
     },

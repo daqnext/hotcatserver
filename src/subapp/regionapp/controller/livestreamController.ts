@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-13 12:03:55
- * @LastEditTime: 2021-07-13 12:06:21
+ * @LastEditTime: 2021-07-21 16:57:48
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/subapp/regionapp/controller/livestreamController.ts
@@ -20,6 +20,7 @@ import { rootDIR } from "../../../global";
 import randomString from "string-random";
 import { resp } from "../../../utils/resp";
 import { Utils } from "../../../utils/utils";
+import request from "request";
 
 class livestreamController {
     public static init(Router: router) {
@@ -27,20 +28,28 @@ class livestreamController {
         //config all the get requests
         Router.post("/api/livestream/create", proxy(config.center_host, {}));
         Router.post("/api/livestream/delete", proxy(config.center_host, {}));
-        Router.post("/api/livestream/get", proxy(config.center_host, {}));
+        Router.post("/api/livestream/update", proxy(config.center_host, {}));
+        Router.post("/api/livestream/finish", proxy(config.center_host, {}));
+        Router.post("/api/livestream/list", proxy(config.center_host, {}));
 
-        Router.post("/api/livestream/uploadcover", proxy(config.center_host, {}));
+        Router.post("/api/livestream/get", proxy(config.center_host, {}));
+        Router.post("/api/livestream/query", proxy(config.center_host, {}));
+
+        // Router.post("/api/livestream/uploadcover", proxy(config.center_host, {}));
+        Router.post("/api/livestream/uploadcover", async (ctx) => {
+            const res = await ctx.req.pipe(request.post(config.center_host + "/api/livestream/uploadcover"));
+            ctx.body = res;
+        });
+        //deleteCover
+        Router.post("/api/livestream/deletecover", proxy(config.center_host, {}));
 
         //watching
-        Router.get("/api/livestream/watching/:streamId", C.watching);
+        Router.get("/api/livestream/watching/:streamId", proxy(config.center_host, {}));
+        //watch
+        Router.get("/api/livestream/watch/:streamId", proxy(config.center_host, {}));
 
         //config all the post requests
         return C;
-    }
-
-    async watching(ctx: koa.Context, next: koa.Next) {
-        console.log(ctx.params);
-        ctx.body = ctx.params;
     }
 }
 

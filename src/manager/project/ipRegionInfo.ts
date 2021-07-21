@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-12 12:00:35
- * @LastEditTime: 2021-07-13 10:22:21
+ * @LastEditTime: 2021-07-21 14:46:12
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/project/ipRegionInfo.ts
@@ -10,20 +10,13 @@ import ip2loc from "ip2location-nodejs";
 import fs from "fs";
 import csvParse from "csv-parse/lib/sync";
 import path from "path";
-import { rootDIR } from "../../global";
-import { ERegion, IIpInfo } from "../../interface/interface";
+import { logger, rootDIR } from "../../global";
+import {  IIpInfo } from "../../interface/interface";
+import { regionMapConfigModel } from "../../model/regionMapConfigModel";
 
 class ipRegionInfo {
-    static countryMap: { [key: string]: string } = {};
-    static continentRegionMap: { [key: string]: ERegion } = {
-        Asia: ERegion.Asia,
-        Oceania: ERegion.NorthAmerica,
-        Africa: ERegion.NorthAmerica,
-        Europe: ERegion.Europe,
-        "North America": ERegion.NorthAmerica,
-        "South America": ERegion.NorthAmerica,
-        unknown: ERegion.NorthAmerica,
-    };
+    static countryToContinentMap: { [key: string]: string } = {}; //country => continent
+    static areaToRegionMap: { [key: string]: string } = {}; // area(country or continent) => region
 
     static init() {
         const binPath = path.join(rootDIR, "../", "ipData", "IP2LOCATION-LITE-DB1.BIN");
@@ -32,14 +25,27 @@ class ipRegionInfo {
         //ip country-continent csv
         const csvPath = path.join(rootDIR, "../", "ipData", "IP2LOCATION-CONTINENT-ENGLISH.CSV");
         const csvStr = fs.readFileSync(csvPath, "utf8");
-
         const records = csvParse(csvStr, {
             columns: true,
             skip_empty_lines: true,
         });
-
         for (const value of records) {
-            this.countryMap[value.country_alpha2_code] = value.continent;
+            this.countryToContinentMap[value.country_alpha2_code] = value.continent;
+        }
+    }
+
+    static async updateAreaToRegionMap(){
+        try {
+            const result = await regionMapConfigModel.findAll()
+            //console.log(result);
+            const aToRMap: { [key: string]: string } = {}
+            for (let i = 0; i < result.length; i++) {
+                aToRMap[result[i].areaName]=result[i].region
+            }
+            this.areaToRegionMap=aToRMap
+            console.log(this.areaToRegionMap);
+        } catch (error) {
+            console.error("updateAreaToRegionMap error:",error);
         }
     }
 
@@ -47,15 +53,23 @@ class ipRegionInfo {
         const countryCode = ip2loc.IP2Location_get_country_short(ip);
         if (countryCode === "-" || countryCode === "?") {
             return {
-                region: ERegion.NorthAmerica,
+                region: "us-west-1c",
                 continent: "unknown continent",
                 country: "unknown country",
             };
         }
 
         const countryName = ip2loc.IP2Location_get_country_long(ip);
-        const continent = this.countryMap[countryCode] ? this.countryMap[countryCode] : "unknown";
-        const region = this.continentRegionMap[continent];
+        const continent = this.countryToContinentMap[countryCode] ? this.countryToContinentMap[countryCode] : "unknown";
+        
+        let region:string=this.areaToRegionMap[countryName]
+        if (region===null||region==="") {
+            region = this.areaToRegionMap[continent]
+        }
+        if (region===null||region==="") {
+            region = this.areaToRegionMap[continent]
+        }
+        region = "us-west-1c";
 
         return {
             region: region,
