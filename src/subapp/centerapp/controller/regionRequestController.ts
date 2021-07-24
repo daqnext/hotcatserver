@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-12 09:30:39
- * @LastEditTime: 2021-07-21 15:30:57
+ * @LastEditTime: 2021-07-23 11:01:06
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/subapp/centerapp/controller/regionRequestController.ts
@@ -11,6 +11,7 @@ import router from "koa-router";
 import { auth } from "../../../manager/common/auth";
 import { captchaManager } from "../../../manager/project/captchaManager";
 import { categoryManager } from "../../../manager/project/categoryManager";
+import { languageManager } from "../../../manager/project/languageManager";
 import { userManager } from "../../../manager/project/userManager";
 import { resp } from "../../../utils/resp";
 import { Utils } from "../../../utils/utils";
@@ -24,6 +25,7 @@ class regionRequestController {
         Router.post("/api/region/serverlogin",C.regionServerLogin)
         Router.post("/api/region/getuserinfo", C.regionGetUserInfo);
         Router.get("/api/region/getcategory", C.regionGetCategory);
+        Router.get("/api/region/getlanguage", C.regionGetLanguage);
 
         //config all the post requests
         return C;
@@ -54,6 +56,16 @@ class regionRequestController {
             return;
         }
         resp.send(ctx,0,categoryMap,null)
+        return
+    }
+
+    async regionGetLanguage(ctx: koa.Context, next: koa.Next) {
+        const { languageMap, errMsg } = await languageManager.centerGetAllLanguage();
+        if (languageMap === null) {
+            resp.send(ctx,1,null,errMsg)
+            return;
+        }
+        resp.send(ctx,0,languageMap,null)
         return
     }
 }

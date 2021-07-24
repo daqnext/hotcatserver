@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 10:47:59
- * @LastEditTime: 2021-07-21 12:58:23
+ * @LastEditTime: 2021-07-23 10:49:43
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/inidata/iniSqlData.ts
@@ -10,6 +10,7 @@ import { SqlTool } from "../db/SqlTool";
 import { logger } from "../global";
 import { categoryModel, categoryModel_createData } from "../model/categoryModel";
 import { configModel, configModel_createData } from "../model/configModel";
+import { languageConfigModel_createData } from "../model/languageConfigModel";
 import { livestreamModel_createData } from "../model/livestreamModel";
 import { regionMapConfigModel_createData } from "../model/regionMapConfigModel";
 import { regionServerConfigModel_createData } from "../model/regionServerConfigModel";
@@ -32,6 +33,7 @@ class iniSqlData {
         await configModel_createData();
         await regionServerConfigModel_createData();
         await regionMapConfigModel_createData();
+        await languageConfigModel_createData();
     }
 }
 

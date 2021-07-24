@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 11:38:23
- * @LastEditTime: 2021-07-21 15:43:23
+ * @LastEditTime: 2021-07-23 16:35:06
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/interface/user.ts
@@ -32,6 +32,7 @@ export interface ICreateLivestreamMsg {
     subTitle: string;
     description: string;
     category: string;
+    language:string;
     coverImgUrl: string;
     captcha: string;
     captchaId: string;
@@ -44,6 +45,7 @@ export interface IUpdateLivestreamMsg{
     subTitle: string;
     description: string;
     category: string;
+    language:string;
     coverImgUrl: string;
 }
 
@@ -73,6 +75,17 @@ export interface IQueryLivestreamMsg{
     region?:string;
     category?:string;
     userName?:string;
+}
+
+export interface IGetVideoListMsg{
+    category:string,
+    isOnLive:boolean,
+    count:number,
+    offset:number,
+}
+
+export interface ISearchVideoMsg{
+    keyWords:string[],
 }
 
 export interface IStreamOnPublishMsg {

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 09:09:21
- * @LastEditTime: 2021-07-21 17:31:32
+ * @LastEditTime: 2021-07-23 10:37:53
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/interface/interface.ts
@@ -34,6 +34,7 @@ export interface ILiveStream {
     name: string;
     subTitle:string;
     category:string;
+    language:string;
     description:string;
     userId: number;
     userName: string;

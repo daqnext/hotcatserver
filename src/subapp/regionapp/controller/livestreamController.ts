@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-13 12:03:55
- * @LastEditTime: 2021-07-21 16:57:48
+ * @LastEditTime: 2021-07-24 15:31:15
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/subapp/regionapp/controller/livestreamController.ts
@@ -30,10 +30,12 @@ class livestreamController {
         Router.post("/api/livestream/delete", proxy(config.center_host, {}));
         Router.post("/api/livestream/update", proxy(config.center_host, {}));
         Router.post("/api/livestream/finish", proxy(config.center_host, {}));
-        Router.post("/api/livestream/list", proxy(config.center_host, {}));
+        Router.post("/api/livestream/managelist", proxy(config.center_host, {}));
 
         Router.post("/api/livestream/get", proxy(config.center_host, {}));
         Router.post("/api/livestream/query", proxy(config.center_host, {}));
+
+        Router.post("/api/livestream/getvideolist", proxy(config.center_host, {}));
 
         // Router.post("/api/livestream/uploadcover", proxy(config.center_host, {}));
         Router.post("/api/livestream/uploadcover", async (ctx) => {
@@ -44,9 +46,9 @@ class livestreamController {
         Router.post("/api/livestream/deletecover", proxy(config.center_host, {}));
 
         //watching
-        Router.get("/api/livestream/watching/:streamId", proxy(config.center_host, {}));
+        Router.get("/api/livestream/watching/:streamId/:category", proxy(config.center_host, {}));
         //watch
-        Router.get("/api/livestream/watch/:streamId", proxy(config.center_host, {}));
+        Router.get("/api/livestream/watch/:streamId/:category", proxy(config.center_host, {}));
 
         //config all the post requests
         return C;

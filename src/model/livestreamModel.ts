@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 14:19:10
- * @LastEditTime: 2021-07-21 17:32:51
+ * @LastEditTime: 2021-07-23 10:29:19
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/model/livestreamModel.ts
@@ -20,6 +20,7 @@ class livestreamModel extends Model implements ILiveStream {
     subTitle: string;
     description: string;
     category: string;
+    language: string;
     userId: number;
     userName: string;
     region: string;
@@ -30,7 +31,7 @@ class livestreamModel extends Model implements ILiveStream {
     startTimeStamp: number;
     endTimeStamp: number;
     coverImgUrl: string;
-    watched:number;
+    watched: number;
 }
 
 livestreamModel.init(
@@ -45,6 +46,7 @@ livestreamModel.init(
         subTitle: { type: DataTypes.STRING(255), allowNull: false },
         description: { type: DataTypes.STRING(255), allowNull: false },
         category: { type: DataTypes.STRING(32), allowNull: false },
+        language: { type: DataTypes.STRING(32), allowNull: false, defaultValue: "English" },
         name: {
             type: DataTypes.STRING(32),
             allowNull: false,

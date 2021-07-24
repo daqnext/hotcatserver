@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:58:13
- * @LastEditTime: 2021-07-21 13:42:27
+ * @LastEditTime: 2021-07-22 16:46:07
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/srsNotifyController.ts
@@ -52,9 +52,9 @@ class srsNotifyController {
         //   type: 'live'
 
         // //for test
-        ctx.status = 200;
-        ctx.body = 0;
-        return
+        // ctx.status = 200;
+        // ctx.body = 0;
+        // return
 
         //check id and secret
         const paramStr=msg.swfurl.split("?")[1]
@@ -105,7 +105,8 @@ class srsNotifyController {
         console.log(msg);
 
         //check id and secret
-        const param = queryString.parse(msg.swfurl);
+        const paramStr=msg.swfurl.split("?")[1]
+        const param = queryString.parse(paramStr);
         const secret = param.secret as string
         if (!secret) {
             ctx.status = 500;

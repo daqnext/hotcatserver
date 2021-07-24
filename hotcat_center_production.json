@@ -1,0 +1,19 @@
+{
+    "apps": [{
+        "name": "hotcat_center_production",
+        "script": "./dist/subapp/centerapp/app.js",
+        "cwd": "~/hotcatsever",
+        "watch": [
+            "./dist/"
+        ],
+        "ignore_watch": [
+            "./dist/cmd/"
+        ],
+        "instances": "max",
+        "exec_mode": "cluster",
+        "error_file": "./logs/error.log",
+        "out_file": "./logs/app-out.log",
+        "log_date_format": "YYYY-MM-DD HH:mm:ss",
+        "restart_delay": 5000
+    }]
+}

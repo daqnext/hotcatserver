@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:04:26
- * @LastEditTime: 2021-07-21 23:44:45
+ * @LastEditTime: 2021-07-25 01:09:27
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/livestreamController.ts
@@ -10,9 +10,18 @@
 import koa from "koa";
 import router from "koa-router";
 import moment from "moment";
-import { ICreateLivestreamMsg, IDeleteCoverMsg, IDeleteLivestreamMsg, IFinishLivestreamMsg, IQueryLivestreamMsg, IUpdateLivestreamMsg } from "../../../interface/msg";
+import {
+    ICreateLivestreamMsg,
+    IDeleteCoverMsg,
+    IDeleteLivestreamMsg,
+    IFinishLivestreamMsg,
+    IGetVideoListMsg,
+    IQueryLivestreamMsg,
+    IUpdateLivestreamMsg,
+} from "../../../interface/msg";
 import { auth } from "../../../manager/common/auth";
 import multer from "@koa/multer";
+import asyncBusboy from 'async-busboy';
 import fs from "fs";
 import path from "path";
 import { rootDIR } from "../../../global";
@@ -50,10 +59,12 @@ class livestreamController {
         Router.post("/api/livestream/delete", auth.ParseTokenMiddleware(), C.deleteLivestream);
         Router.post("/api/livestream/update", auth.ParseTokenMiddleware(), C.updateLivestream);
         Router.post("/api/livestream/finish", auth.ParseTokenMiddleware(), C.finishLivestream);
-        Router.post("/api/livestream/list", auth.ParseTokenMiddleware(), C.listLivestream);
+        Router.post("/api/livestream/managelist", auth.ParseTokenMiddleware(), C.manageListLivestream);
 
         Router.post("/api/livestream/get", C.getLivestream);
         Router.post("/api/livestream/query", auth.ParseTokenMiddleware(), C.queryLivestream);
+
+        Router.post("/api/livestream/getvideolist", C.handleGetVideoList);
 
         //uploadcover
         Router.post("/api/livestream/uploadcover", auth.ParseTokenMiddleware(), C.handleUploadCover);
@@ -61,9 +72,9 @@ class livestreamController {
         Router.post("/api/livestream/deletecover", auth.ParseTokenMiddleware(), C.handleDeleteCover);
 
         //watching
-        Router.get("/api/livestream/watching/:streamId", C.watching);
+        Router.get("/api/livestream/watching/:streamId/:category", C.watching);
         //watch
-        Router.get("/api/livestream/watch/:streamId", C.watch);
+        Router.get("/api/livestream/watch/:streamId/:category", C.watch);
 
         //config all the post requests
         return C;
@@ -93,6 +104,7 @@ class livestreamController {
             msg.subTitle,
             msg.description,
             msg.category,
+            msg.language,
             ipInfo.region,
             msg.coverImgUrl
         );
@@ -136,6 +148,7 @@ class livestreamController {
             name: livestream.name,
             subTitle: livestream.subTitle,
             category: livestream.category,
+            language: livestream.language,
             description: livestream.description,
             userId: livestream.userId,
             userName: livestream.userName,
@@ -147,7 +160,7 @@ class livestreamController {
             startTimeStamp: livestream.startTimeStamp,
             endTimeStamp: livestream.endTimeStamp,
             coverImgUrl: livestream.coverImgUrl,
-            watched:livestream.watched,
+            watched: livestream.watched,
             rtmpLink: streamUrl.rtmpLink,
             originLiveM3u8Link: streamUrl.originLiveM3u8Link,
             cdnLiveM3u8Link: streamUrl.cdnLiveM3u8Link,
@@ -163,8 +176,8 @@ class livestreamController {
         console.log(msg);
 
         const success = await livestreamManager.DeleteLiveStream(msg.streamId, msg.secret);
-        if (success==false) {
-            resp.send(ctx, 1,null,"delete failed");
+        if (success == false) {
+            resp.send(ctx, 1, null, "delete failed");
         }
         //delete bindDomain in cdn
         const requestUrl = config.cdn_host + "/api/v1/admin/hotcat/deletelivebinddomain";
@@ -189,7 +202,7 @@ class livestreamController {
             return;
         }
 
-        const { livestream, errMsg } = await livestreamManager.GetLiveStreamById(id);
+        const livestream = await livestreamManager.GetLiveStreamById(id);
         if (livestream === null) {
             resp.send(ctx, 1, null, "no program info");
             return;
@@ -207,22 +220,22 @@ class livestreamController {
         const user: IUserInfo = ctx.state.user;
         console.log(user);
 
-        const { livestream, errMsg } = await livestreamManager.UpdateLiveStream(
+        const success = await livestreamManager.UpdateLiveStream(
             msg.streamId,
-            user.id,
             msg.secret,
             msg.streamName,
             msg.subTitle,
             msg.description,
             msg.category,
+            msg.language,
             msg.coverImgUrl
         );
-        if (livestream === null) {
+        if (success === false) {
             resp.send(ctx, 1, null, "no program info");
             return;
         }
 
-        resp.send(ctx, 0, livestream, null);
+        resp.send(ctx, 0, null, null);
     }
 
     async finishLivestream(ctx: koa.Context, next: koa.Next) {
@@ -235,45 +248,85 @@ class livestreamController {
         const user: IUserInfo = ctx.state.user;
         console.log(user);
 
-        const { livestream, errMsg } = await livestreamManager.ModifyStreamStatus(
-            msg.streamId,msg.secret,ELiveStreamStatus.END
-        );
-        if (livestream === null) {
+        const success = await livestreamManager.ModifyStreamStatus(msg.streamId, msg.secret, ELiveStreamStatus.END);
+        if (success === false) {
             resp.send(ctx, 1, null, "no program info");
             return;
         }
 
-        resp.send(ctx, 0, livestream, null);
+        resp.send(ctx, 0);
     }
 
-    async listLivestream(ctx: koa.Context,next:koa.Next){
+    async manageListLivestream(ctx: koa.Context, next: koa.Next) {
         const msg: IQueryLivestreamMsg = ctx.request.body;
         console.log(msg);
         const user: IUserInfo = ctx.state.user;
         console.log(user);
 
-        const queryCondition:any ={}
+        const queryCondition: any = {};
         if (msg.category) {
-            queryCondition.category=msg.category
+            queryCondition.category = msg.category;
         }
         if (msg.region) {
-            queryCondition.region=msg.region
+            queryCondition.region = msg.region;
         }
         if (msg.status) {
-            queryCondition.status=msg.status
+            queryCondition.status = msg.status;
         }
 
-        queryCondition.userId=user.id
+        queryCondition.userId = user.id;
 
-        const order=[["id","DESC"]]
+        const order = [["id", "DESC"]];
 
-        const {rows,count}=await livestreamManager.DirectQueryLiveStreams(queryCondition,msg.limit,msg.offset,order)
+        const { rows, count } = await livestreamManager.DirectQueryLiveStreams(queryCondition, msg.limit, msg.offset, order);
 
-        const responseData={
-            data:rows,
-            count:count
+        const streams: ILiveStream[] = [];
+        for (let i = 0; i < rows.length; i++) {
+            const liveStreamInfo: ILiveStream = {
+                id: rows[i].id,
+                name: rows[i].name,
+                subTitle: rows[i].subTitle,
+                category: rows[i].category,
+                language: rows[i].language,
+                description: rows[i].description,
+                userId: rows[i].userId,
+                userName: rows[i].userName,
+                region: rows[i].region,
+                secret: rows[i].secret,
+                status: rows[i].status,
+                duration: rows[i].duration,
+                createTimeStamp: rows[i].createTimeStamp,
+                startTimeStamp: rows[i].startTimeStamp,
+                endTimeStamp: rows[i].endTimeStamp,
+                coverImgUrl: rows[i].coverImgUrl,
+                watched: rows[i].watched,
+                // rtmpLink: streamUrl.rtmpLink,
+                // originLiveM3u8Link: streamUrl.originLiveM3u8Link,
+                // cdnLiveM3u8Link: streamUrl.cdnLiveM3u8Link,
+                // originRecordM3u8Link: streamUrl.originRecordM3u8Link,
+                // cdnRecordM3u8Link: streamUrl.cdnRecordM3u8Link,
+            };
+            streams.push(liveStreamInfo);
+
+            const streamUrl = await livestreamManager.GetLiveStreamUrl(rows[i].region, rows[i].id, rows[i].secret);
+            if (streamUrl === null) {
+                continue;
+            }
+
+            liveStreamInfo.rtmpLink = streamUrl.rtmpLink;
+            liveStreamInfo.originLiveM3u8Link = streamUrl.originLiveM3u8Link;
+            liveStreamInfo.cdnLiveM3u8Link = streamUrl.cdnLiveM3u8Link;
+            liveStreamInfo.originRecordM3u8Link = streamUrl.originRecordM3u8Link;
+            liveStreamInfo.cdnRecordM3u8Link = streamUrl.cdnRecordM3u8Link;
         }
-        resp.send(ctx,0,responseData)
+
+        console.log(streams);
+
+        const responseData = {
+            data: streams,
+            count: count,
+        };
+        resp.send(ctx, 0, responseData);
     }
 
     async queryLivestream(ctx: koa.Context, next: koa.Next) {
@@ -282,7 +335,7 @@ class livestreamController {
             resp.send(ctx, 1, null, "no program info");
             return;
         }
-        
+
         // const queryCondition:any ={}
         // if (msg.category) {
         //     queryCondition.category=msg.category
@@ -309,6 +362,18 @@ class livestreamController {
         // resp.send(ctx,0,responseData)
     }
 
+    async handleGetVideoList(ctx: koa.Context, next: koa.Next) {
+        const msg: IGetVideoListMsg = ctx.request.body;
+        if (msg === null) {
+            resp.send(ctx, 1, null, "no program info");
+            return;
+        }
+
+        const result=await livestreamManager.GetLiveStreamByRank(msg.category,msg.count)
+        console.log(result);
+        resp.send(ctx,0,result)
+    }
+
     async watching(ctx: koa.Context, next: koa.Next) {
         console.log(ctx.params);
         ctx.body = ctx.params;
@@ -316,10 +381,11 @@ class livestreamController {
 
     async watch(ctx: koa.Context, next: koa.Next) {
         console.log(ctx.params);
-        const id=ctx.params.id
-        livestreamManager.AddWatched(id)
-        
-        resp.send(ctx,0)
+        const id = ctx.params.streamId;
+        const category = ctx.params.category;
+        livestreamManager.AddWatched(id,category);
+
+        resp.send(ctx, 0);
     }
     async handleUploadCover(ctx: koa.Context, next: koa.Next) {
         try {
@@ -338,10 +404,10 @@ class livestreamController {
                 return;
             }
             // if (
-            //     imgInfo.width < 100 ||
-            //     imgInfo.width > 200 ||
-            //     imgInfo.height < 100 ||
-            //     imgInfo.height > 200
+            //     imgInfo.width < 160 ||
+            //     imgInfo.width > 640 ||
+            //     imgInfo.height < 90 ||
+            //     imgInfo.height > 360
             // ) {
             //     resp.send(ctx, 1, null, "image size error");
             //     return;

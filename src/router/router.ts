@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-09 08:50:53
- * @LastEditTime: 2021-07-21 13:49:03
+ * @LastEditTime: 2021-07-25 00:41:54
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/router/router.ts
@@ -81,6 +81,7 @@ class AppRouter {
         
             App.use(
                 bodyParser({
+                    //multipart: true,
                     onerror: function (err, ctx) {
                         ctx.throw("body parse error", 422);
                     },
