@@ -40,7 +40,7 @@ class livestreamManager {
         subTitle: string,
         description: string,
         category: string,
-        language:string,
+        language: string,
         region: string,
         coverImgUrl: string
     ): Promise<{ livestream: livestreamModel; errMsg: string }> {
@@ -73,7 +73,7 @@ class livestreamManager {
                 subTitle: subTitle,
                 description: description,
                 category: category,
-                language:language,
+                language: language,
                 region: region,
                 secret: secret,
                 status: "ready",
@@ -155,49 +155,45 @@ class livestreamManager {
         subTitle: string,
         description: string,
         category: string,
-        language:string,
+        language: string,
         coverImgUrl: string
     ): Promise<boolean> {
         //update sql
         try {
             //get old info
-            const oldStreamInfo = await this.GetLiveStreamById(id)
-            if (oldStreamInfo===null) {
-                return false
+            const oldStreamInfo = await this.GetLiveStreamById(id);
+            if (oldStreamInfo === null) {
+                return false;
             }
 
-            const updateData={
+            const updateData = {
                 name: streamName,
-                    subTitle: subTitle,
-                    description: description,
-                    category: category,
-                    language:language,
-                    coverImgUrl: coverImgUrl,
-            }
-            const [count] = await livestreamModel.update(
-                updateData,
-                { where: { id: id, secret: secret } }
-            );
+                subTitle: subTitle,
+                description: description,
+                category: category,
+                language: language,
+                coverImgUrl: coverImgUrl,
+            };
+            const [count] = await livestreamModel.update(updateData, { where: { id: id, secret: secret } });
             if (count <= 0) {
                 return false;
             }
 
             //update redis
-            this.updateStreamInfoInRedis(id,updateData)
+            this.updateStreamInfoInRedis(id, updateData);
 
             //move category if need
-            if (oldStreamInfo.category!==category) {
+            if (oldStreamInfo.category !== category) {
                 console.log("category modify");
-                const removeKey=WatchRankByCategory_category_zset+oldStreamInfo.category
-                const addKey=WatchRankByCategory_category_zset+category
-                const idStr=id+""
-                const watched=await redisTool.getSingleInstance().redis.zscore(removeKey,idStr)
-                const pipe=redisTool.getSingleInstance().redis.pipeline()
-                pipe.zrem(removeKey,idStr)
-                pipe.zincrby(addKey,parseInt(watched),idStr)
-                pipe.exec()
+                const removeKey = WatchRankByCategory_category_zset + oldStreamInfo.category;
+                const addKey = WatchRankByCategory_category_zset + category;
+                const idStr = id + "";
+                const watched = await redisTool.getSingleInstance().redis.zscore(removeKey, idStr);
+                const pipe = redisTool.getSingleInstance().redis.pipeline();
+                pipe.zrem(removeKey, idStr);
+                pipe.zincrby(addKey, parseInt(watched), idStr);
+                pipe.exec();
             }
-            
 
             return true;
         } catch (error) {
@@ -214,18 +210,18 @@ class livestreamManager {
             };
 
             //get old info
-            const oldStreamInfo = await this.GetLiveStreamById(id)
-            if (oldStreamInfo===null) {
-                return false
+            const oldStreamInfo = await this.GetLiveStreamById(id);
+            if (oldStreamInfo === null) {
+                return false;
             }
 
-            let duration =oldStreamInfo.duration
+            let duration = oldStreamInfo.duration;
             switch (newStatus) {
                 case ELiveStreamStatus.END:
                 case ELiveStreamStatus.PAUSE:
                     updateData.endTimeStamp = moment.now();
-                    updateData.duration=oldStreamInfo.duration+(updateData.endTimeStamp-oldStreamInfo.startTimeStamp)
-                    duration=updateData.duration
+                    updateData.duration = oldStreamInfo.duration + (updateData.endTimeStamp - oldStreamInfo.startTimeStamp);
+                    duration = updateData.duration;
                     break;
                 case ELiveStreamStatus.ONLIVE:
                     updateData.startTimeStamp = moment.now();
@@ -239,29 +235,29 @@ class livestreamManager {
             }
 
             //update redis
-            this.updateStreamInfoInRedis(id,updateData)
+            this.updateStreamInfoInRedis(id, updateData);
 
             //add or remove onlive rank
             switch (newStatus) {
                 case ELiveStreamStatus.END:
                 case ELiveStreamStatus.PAUSE:
                     //remove form Online rank
-                    redisTool.getSingleInstance().redis.zrem(WatchRankByCategory_category_zset+ELiveStreamStatus.ONLIVE,id+"")
+                    redisTool.getSingleInstance().redis.zrem(WatchRankByCategory_category_zset + ELiveStreamStatus.ONLIVE, id + "");
 
-                    if (duration>=8000) {
-                        redisTool.getSingleInstance().redis.zincrby(WatchRankByCategory_category_zset+oldStreamInfo.category,0,id+"")
-                        redisTool.getSingleInstance().redis.zincrby(WatchRankTotal_zset,0,id+"")
+                    if (duration >= 8000) {
+                        redisTool.getSingleInstance().redis.zincrby(WatchRankByCategory_category_zset + oldStreamInfo.category, 0, id + "");
+                        redisTool.getSingleInstance().redis.zincrby(WatchRankTotal_zset, 0, id + "");
                     }
-                    
+
                     break;
                 case ELiveStreamStatus.ONLIVE:
                     //add to online rank
-                    const watched=await redisTool.getSingleInstance().redis.zscore(WatchRankTotal_zset,id+"")
-                    let count=0
-                    if (watched!==null) {
-                        count=parseInt(watched)
+                    const watched = await redisTool.getSingleInstance().redis.zscore(WatchRankTotal_zset, id + "");
+                    let count = 0;
+                    if (watched !== null) {
+                        count = parseInt(watched);
                     }
-                    redisTool.getSingleInstance().redis.zincrby(WatchRankByCategory_category_zset+ELiveStreamStatus.ONLIVE,count,id+"")
+                    redisTool.getSingleInstance().redis.zincrby(WatchRankByCategory_category_zset + ELiveStreamStatus.ONLIVE, count, id + "");
                     break;
             }
 
@@ -324,9 +320,9 @@ class livestreamManager {
     static async GetLiveStreamById(streamId: number): Promise<ILiveStream> {
         try {
             //from redis
-            const info=await this.getFromRedis(streamId)
+            const info = await this.getFromRedis(streamId);
             if (info) {
-                return info
+                return info;
             }
 
             //from db
@@ -338,7 +334,7 @@ class livestreamManager {
                 subTitle: livestream.subTitle,
                 category: livestream.category,
                 description: livestream.description,
-                language:livestream.language,
+                language: livestream.language,
                 userId: livestream.userId,
                 userName: livestream.userName,
                 region: livestream.region,
@@ -358,65 +354,63 @@ class livestreamManager {
             };
 
             //set to redis
-            this.setToRedis(streamInfo,3600)
+            this.setToRedis(streamInfo, 3600);
 
-            return streamInfo
+            return streamInfo;
         } catch (error) {
             console.error("query live stream by id error", error, "streamId=", streamId);
-            return null
+            return null;
         }
     }
 
-    static async GetLiveStreamByRank(category:string|ELiveStreamStatus.ONLIVE,count:number){
-        const key=WatchRankByCategory_category_zset+category
-        const idsStr=await redisTool.getSingleInstance().redis.zrange(key,0,count-1)
+    static async GetLiveStreamByRank(category: string | ELiveStreamStatus.ONLIVE, count: number) {
+        const key = WatchRankByCategory_category_zset + category;
+        const idsStr = await redisTool.getSingleInstance().redis.zrange(key, 0, count - 1);
         console.log(idsStr);
-        
-        const ids:number[]=idsStr.map((value)=>parseInt(value))
-        console.log(ids);
-        
-        const content=await this.batchGetLiveStream(ids)
-        console.log(content);
-        
 
-        return {id:ids,contentMap:content}
+        const ids: number[] = idsStr.map((value) => parseInt(value));
+        console.log(ids);
+
+        const content = await this.batchGetLiveStream(ids);
+        console.log(content);
+
+        return { id: ids, contentMap: content };
     }
 
     // batch get liveStream infos
-    static async batchGetLiveStream(ids:number[]){
+    static async batchGetLiveStream(ids: number[]) {
         //from redis
-        const pipe=redisTool.getSingleInstance().redis.pipeline()
-        for (let i = 0; i <ids.length; i++) {
-            const id=LiveStreamCache_id_string+ids[i]
-            pipe.get(id)
+        const pipe = redisTool.getSingleInstance().redis.pipeline();
+        for (let i = 0; i < ids.length; i++) {
+            const id = LiveStreamCache_id_string + ids[i];
+            pipe.get(id);
         }
-        const result=await pipe.exec()
+        const result = await pipe.exec();
         console.log(result);
-    
-        const streamInfoMap:{[index:number]:string}={}
-        const sqlQueryIds:number[]=[]
+
+        const streamInfoMap: { [index: number]: string } = {};
+        const sqlQueryIds: number[] = [];
         for (let i = 0; i < result.length; i++) {
-            if (result[i][1]===null) {
-                
-                sqlQueryIds.push(ids[i])
-                continue
+            if (result[i][1] === null) {
+                sqlQueryIds.push(ids[i]);
+                continue;
             }
-            streamInfoMap[ids[i]]=result[i][1]
+            streamInfoMap[ids[i]] = result[i][1];
         }
 
-        if (sqlQueryIds.length<=0) {
+        if (sqlQueryIds.length <= 0) {
             //return
             console.log(streamInfoMap);
-            
-            return streamInfoMap
+
+            return streamInfoMap;
         }
 
         //if not in redis, query in sql
-        const sqlResult=await livestreamModel.findAll({where:{id:sqlQueryIds}})
-        if (sqlResult.length>0) {
-            const pipe=redisTool.getSingleInstance().redis.pipeline()
+        const sqlResult = await livestreamModel.findAll({ where: { id: sqlQueryIds } });
+        if (sqlResult.length > 0) {
+            const pipe = redisTool.getSingleInstance().redis.pipeline();
             for (let i = 0; i < sqlResult.length; i++) {
-                const livestream=sqlResult[i]
+                const livestream = sqlResult[i];
                 const streamUrl = await livestreamManager.GetLiveStreamUrl(livestream.region, livestream.id, livestream.secret);
                 const streamInfo: ILiveStream = {
                     id: livestream.id,
@@ -424,7 +418,7 @@ class livestreamManager {
                     subTitle: livestream.subTitle,
                     category: livestream.category,
                     description: livestream.description,
-                    language:livestream.language,
+                    language: livestream.language,
                     userId: livestream.userId,
                     userName: livestream.userName,
                     region: livestream.region,
@@ -442,31 +436,31 @@ class livestreamManager {
                     cdnRecordM3u8Link: streamUrl.cdnRecordM3u8Link,
                 };
 
-                const str=JSON.stringify(streamInfo)
-                streamInfoMap[streamInfo.id]=str
-                if (str!=="") {
-                    const key=LiveStreamCache_id_string+streamInfo.id
-                    pipe.set(key,str,"EX",3600)
+                const str = JSON.stringify(streamInfo);
+                streamInfoMap[streamInfo.id] = str;
+                if (str !== "") {
+                    const key = LiveStreamCache_id_string + streamInfo.id;
+                    pipe.set(key, str, "EX", 3600);
                 }
             }
-            pipe.exec()
+            pipe.exec();
         }
-        
-        return streamInfoMap 
+
+        return streamInfoMap;
     }
 
-    static async AddWatched(streamId: number,category:string) {
-        const pipe=redisTool.getSingleInstance().redis.pipeline()
-        const id=streamId+""
+    static async AddWatched(streamId: number, category: string) {
+        const pipe = redisTool.getSingleInstance().redis.pipeline();
+        const id = streamId + "";
         pipe.hincrby(LiveStreamWatchedIncrease_hash, id, 1);
         pipe.zincrby(WatchRankTotal_zset, 1, id);
-        const key = WatchRankByCategory_category_zset+category
-        pipe.zincrby(key,1,id)
-        pipe.exec()
+        const key = WatchRankByCategory_category_zset + category;
+        pipe.zincrby(key, 1, id);
+        pipe.exec();
 
-        const score = await redisTool.getSingleInstance().redis.zscore(WatchRankByCategory_category_zset+ELiveStreamStatus.ONLIVE,id)
-        if (score!==null) {
-            redisTool.getSingleInstance().redis.zincrby(WatchRankByCategory_category_zset+ELiveStreamStatus.ONLIVE,1,id)
+        const score = await redisTool.getSingleInstance().redis.zscore(WatchRankByCategory_category_zset + ELiveStreamStatus.ONLIVE, id);
+        if (score !== null) {
+            redisTool.getSingleInstance().redis.zincrby(WatchRankByCategory_category_zset + ELiveStreamStatus.ONLIVE, 1, id);
         }
     }
 
@@ -475,17 +469,17 @@ class livestreamManager {
         redisTool.getSingleInstance().redis.del(WatchRankTotal_zset);
         redisTool.getSingleInstance().redis.del(LiveStreamWatchedIncrease_hash);
 
-        const {categoryMap}=await categoryManager.centerGetAllCategory()
-        const cate=Object.keys(categoryMap)
+        const { categoryMap } = await categoryManager.centerGetAllCategory();
+        const cate = Object.keys(categoryMap);
         for (let i = 0; i < cate.length; i++) {
-            redisTool.getSingleInstance().redis.del(WatchRankByCategory_category_zset+cate[i]);
+            redisTool.getSingleInstance().redis.del(WatchRankByCategory_category_zset + cate[i]);
         }
-        redisTool.getSingleInstance().redis.del(WatchRankByCategory_category_zset+ELiveStreamStatus.ONLIVE);
-        
+        redisTool.getSingleInstance().redis.del(WatchRankByCategory_category_zset + ELiveStreamStatus.ONLIVE);
+
         let count = 0;
         do {
             const watchedInfo = await livestreamModel.findAll({
-                attributes: ["id", "watched","category","status"],
+                attributes: ["id", "watched", "category", "status"],
                 limit: 300,
                 offset: count * 300,
             });
@@ -504,10 +498,10 @@ class livestreamManager {
                     continue;
                 }
                 if (watchedInfo[i].status === ELiveStreamStatus.ONLIVE) {
-                    pipe.zincrby(WatchRankByCategory_category_zset+ELiveStreamStatus.ONLIVE, watchedInfo[i].watched, watchedInfo[i].id + "");
+                    pipe.zincrby(WatchRankByCategory_category_zset + ELiveStreamStatus.ONLIVE, watchedInfo[i].watched, watchedInfo[i].id + "");
                 }
                 pipe.zincrby(WatchRankTotal_zset, watchedInfo[i].watched, watchedInfo[i].id + "");
-                pipe.zincrby(WatchRankByCategory_category_zset+watchedInfo[i].category,watchedInfo[i].watched, watchedInfo[i].id + "")
+                pipe.zincrby(WatchRankByCategory_category_zset + watchedInfo[i].category, watchedInfo[i].watched, watchedInfo[i].id + "");
             }
             await pipe.exec();
             count++;
@@ -547,20 +541,20 @@ class livestreamManager {
         }
     }
 
-    static async batchGetWatched(ids:number[]){
-        const pipe=redisTool.getSingleInstance().redis.pipeline()
+    static async batchGetWatched(ids: number[]) {
+        const pipe = redisTool.getSingleInstance().redis.pipeline();
         for (let i = 0; i < ids.length; i++) {
-            pipe.zscore(WatchRankTotal_zset,ids[i]+"")
+            pipe.zscore(WatchRankTotal_zset, ids[i] + "");
         }
-        const result=await pipe.exec()
-        const watchedMap:{[id:number]:number}={}
+        const result = await pipe.exec();
+        const watchedMap: { [id: number]: number } = {};
         for (let i = 0; i < result.length; i++) {
-            if (result[i][1]===null) {
-                continue
+            if (result[i][1] === null) {
+                continue;
             }
-            watchedMap[ids[i]]=result[i][1]
+            watchedMap[ids[i]] = result[i][1];
         }
-        return watchedMap
+        return watchedMap;
     }
 
     static async getWatched(streamId: number) {
@@ -575,59 +569,59 @@ class livestreamManager {
         return result;
     }
 
-    private static async updateStreamInfoInRedis(id: number, obj:{[key:string]:any}) {
+    private static async updateStreamInfoInRedis(id: number, obj: { [key: string]: any }) {
         const key = LiveStreamCache_id_string + id;
-        const result =await redisTool.getSingleInstance().redis.get(key);
-        if (result===null) {
-            return false
+        const result = await redisTool.getSingleInstance().redis.get(key);
+        if (result === null) {
+            return false;
         }
-        const streamInfo:ILiveStream=JSON.parse(result)
-        if (streamInfo===null) {
-            return false
+        const streamInfo: ILiveStream = JSON.parse(result);
+        if (streamInfo === null) {
+            return false;
         }
         for (const key in obj) {
-            streamInfo[key]=obj[key]
+            streamInfo[key] = obj[key];
         }
-        const setResult = await this.setToRedis(streamInfo)
-        return setResult
+        const setResult = await this.setToRedis(streamInfo);
+        return setResult;
     }
 
-    private static async getFromRedis(id:number){
+    private static async getFromRedis(id: number) {
         const key = LiveStreamCache_id_string + id;
-        const str=await redisTool.getSingleInstance().redis.get(key)
-        if (str===null) {
-            return null
+        const str = await redisTool.getSingleInstance().redis.get(key);
+        if (str === null) {
+            return null;
         }
-        const streamInfo:ILiveStream= JSON.parse(str)
-        return streamInfo
+        const streamInfo: ILiveStream = JSON.parse(str);
+        return streamInfo;
     }
 
     private static async setToRedis(info: ILiveStream, ex: number = null) {
-        const str=JSON.stringify(info)
-        if (str==="") {
-            console.error("setToRedis JSON.stringify error,","obj:",info);
-            return false
+        const str = JSON.stringify(info);
+        if (str === "") {
+            console.error("setToRedis JSON.stringify error,", "obj:", info);
+            return false;
         }
         const key = LiveStreamCache_id_string + info.id;
-        const result = await redisTool.getSingleInstance().redis.set(key, str,"KEEPTTL");
+        const result = await redisTool.getSingleInstance().redis.set(key, str, "KEEPTTL");
         if (ex !== null) {
             await redisTool.getSingleInstance().redis.expire(key, ex);
         }
-        if (result!=="OK") {
-            console.error("setToRedis set error,","key:",key,"string:",str);
-            return false
+        if (result !== "OK") {
+            console.error("setToRedis set error,", "key:", key, "string:", str);
+            return false;
         }
-        return true
+        return true;
     }
 
     // private static async getLiveStreamInfoFormRedis(id:number) {
     //     const key = LiveStreamCache_id_hash + id;
     //     const result = await redisTool.getSingleInstance().redis.hgetall(key);
-        
+
     //     if (Object.keys(result).length === 0) {
     //         return null;
     //     }
-        
+
     //     const info: ILiveStream = result as unknown as ILiveStream;
     //     info.id = parseInt(result.id);
     //     info.userId = parseInt(result.userId);

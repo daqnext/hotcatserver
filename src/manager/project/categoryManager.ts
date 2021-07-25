@@ -15,7 +15,7 @@ class categoryManager {
     static categoryMap: { [key: string]: string[] } = null;
     static async regionGetAllCategory() {
         if (this.categoryMap === null) {
-            await this.regionRefreshCategory()
+            await this.regionRefreshCategory();
         }
         return { categoryMap: this.categoryMap, errMsg: "" };
     }
@@ -30,10 +30,10 @@ class categoryManager {
     static async centerRefreshCategory() {
         try {
             console.log("get category");
-            
+
             const category = await categoryModel.findAll();
             console.log(category);
-            
+
             let tempCategoryMap: { [key: string]: string[] } = {};
             for (let i = 0; i < category.length; i++) {
                 let cate = category[i].category;
@@ -51,10 +51,10 @@ class categoryManager {
 
     static async regionRefreshCategory() {
         console.log("get category");
-        let url=config.center_host + "/api/region/getcategory"
+        let url = config.center_host + "/api/region/getcategory";
         let data = await requestTool.get(url);
         console.log(data);
-        
+
         if (data.status == 0) {
             this.categoryMap = data.data;
         }

@@ -7,21 +7,14 @@
  * @FilePath: /hotcatserver/src/manager/project/regionServerManager.ts
  */
 
-const RegionMaster="RegionMaster_hash"
+const RegionMaster = "RegionMaster_hash";
 
-class regionServerManager{
-    static setRegionMaster(regionName:string){
-        
-    }
+class regionServerManager {
+    static setRegionMaster(regionName: string) {}
 
-    static getRegionMasterInfo(regionName:string){
+    static getRegionMasterInfo(regionName: string) {}
 
-    }
-
-    static getAllRegionMasterInfo(){
-        
-    }
-    
+    static getAllRegionMasterInfo() {}
 }
 
-export {regionServerManager}
+export { regionServerManager };

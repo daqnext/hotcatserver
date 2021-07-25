@@ -15,3 +15,5 @@ src/test/
 public/
 src/config/dev_center_config.ts
 src/config/dev_region_config.ts
+src/config/prod_center_config.ts
+src/config/prod_region_config.ts

@@ -10,34 +10,34 @@
 import { regionServerConfigModel } from "../../model/regionServerConfigModel";
 
 class liveServerManager {
-    static regionLiveServerMap:{[key:string]:{storageSeverAddress:string,rtmpServerAddress:string}}={}
+    static regionLiveServerMap: { [key: string]: { storageSeverAddress: string; rtmpServerAddress: string } } = {};
 
-    static async updateLiveServerMap(){
+    static async updateLiveServerMap() {
         try {
-            const result = await regionServerConfigModel.findAll()
+            const result = await regionServerConfigModel.findAll();
             //console.log(result);
-            const regionServerConfig: {[key:string]:{storageSeverAddress:string,rtmpServerAddress:string}} = {}
+            const regionServerConfig: { [key: string]: { storageSeverAddress: string; rtmpServerAddress: string } } = {};
             for (let i = 0; i < result.length; i++) {
-                regionServerConfig[result[i].region]={
-                    storageSeverAddress:result[i].storageServerAddress,
-                    rtmpServerAddress:result[i].rtmpServerAddress,
-                }
+                regionServerConfig[result[i].region] = {
+                    storageSeverAddress: result[i].storageServerAddress,
+                    rtmpServerAddress: result[i].rtmpServerAddress,
+                };
             }
-            this.regionLiveServerMap=regionServerConfig
+            this.regionLiveServerMap = regionServerConfig;
             console.log(this.regionLiveServerMap);
         } catch (error) {
-            console.error("updateLiveServerMap error:",error);
+            console.error("updateLiveServerMap error:", error);
         }
     }
-    
-    static GetLiveServerByRegion(region:string):{storageSeverAddress:string,rtmpServerAddress:string}{
+
+    static GetLiveServerByRegion(region: string): { storageSeverAddress: string; rtmpServerAddress: string } {
         if (this.regionLiveServerMap[region]) {
-            return this.regionLiveServerMap[region]
+            return this.regionLiveServerMap[region];
         }
         return {
-            storageSeverAddress:"https://us_west_1c_s.hotcat.live",
-            rtmpServerAddress:"rtmp://us_west_1c_r.hotcat.live"
-        }
+            storageSeverAddress: "https://us_west_1c_s.hotcat.live",
+            rtmpServerAddress: "rtmp://us_west_1c_r.hotcat.live",
+        };
     }
 }
 

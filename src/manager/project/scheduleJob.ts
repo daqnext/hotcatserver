@@ -6,13 +6,17 @@
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/project/scheduleJob.ts
  */
-import schedule from 'node-schedule';
+import schedule from "node-schedule";
 
-class scheduleJob{
-    static AddScheduleJob(jobName:string,rule: string | number | schedule.RecurrenceRule | schedule.RecurrenceSpecDateRange | schedule.RecurrenceSpecObjLit | Date, callback: schedule.JobCallback){
-        const job=schedule.scheduleJob(jobName,rule,callback)
-        console.info('schedule job standby:',job.name)
+class scheduleJob {
+    static AddScheduleJob(
+        jobName: string,
+        rule: string | number | schedule.RecurrenceRule | schedule.RecurrenceSpecDateRange | schedule.RecurrenceSpecObjLit | Date,
+        callback: schedule.JobCallback
+    ) {
+        const job = schedule.scheduleJob(jobName, rule, callback);
+        console.info("schedule job standby:", job.name);
     }
 }
 
-export{scheduleJob}
+export { scheduleJob };

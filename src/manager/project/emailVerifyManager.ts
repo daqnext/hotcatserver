@@ -16,10 +16,7 @@ const EmailVCode_email_string = "EmailVCode_";
 const EmailVCodeCoolDown_email_string = "EmailVCodeCoolDown_";
 
 class emailVerifyManager {
-    private static async SendEmailVCode(
-        targetEmail: string,
-        vCode: string
-    ): Promise<{ success: boolean; err: any }> {
+    private static async SendEmailVCode(targetEmail: string, vCode: string): Promise<{ success: boolean; err: any }> {
         const smtpTransport = nodemailer.createTransport({
             host: config.email_host,
             secureConnection: false, // use SSL
@@ -40,10 +37,7 @@ class emailVerifyManager {
                     to: targetEmail,
                     subject: "Verification code from hotcat.live", //邮件主题
                     //text    : msg,
-                    html:
-                        "Welcome to hotcat.live!\n Your verification code is [" +
-                        vCode +
-                        "], it will expire in 24 hours",
+                    html: "Welcome to hotcat.live!\n Your verification code is [" + vCode + "], it will expire in 24 hours",
                 },
                 function (err, res) {
                     if (err) {

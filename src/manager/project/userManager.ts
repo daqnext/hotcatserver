@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 10:47:59
- * @LastEditTime: 2021-07-21 15:36:09
+ * @LastEditTime: 2021-07-25 13:31:29
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/userManager.ts
@@ -30,9 +30,7 @@ class userManager {
         return crypto.randomBytes(16).toString("base64").slice(0, 16);
     }
 
-    public static async createNewUser(
-        registerInfo: IUserRegisterMsg
-    ): Promise<{ user: IUserInfo; errMsg: string }> {
+    public static async createNewUser(registerInfo: IUserRegisterMsg): Promise<{ user: IUserInfo; errMsg: string }> {
         try {
             let user = await userModel.findOne<userModel>({
                 where: { name: registerInfo.userName },
@@ -62,22 +60,20 @@ class userManager {
         }
     }
 
-    public static async deleteUser(id:number){
+    public static async deleteUser(id: number) {
         try {
-            const number=await userModel.destroy({where:{id:id}})
-            if (number>0) {
-                return true
+            const number = await userModel.destroy({ where: { id: id } });
+            if (number > 0) {
+                return true;
             }
-            return false
+            return false;
         } catch (error) {
-            console.error("delete user error", error, "id:",id);
-            return false
+            console.error("delete user error", error, "id:", id);
+            return false;
         }
     }
 
-    public static async getUserByEmail(
-        email: string
-    ): Promise<{ user: userModel; errMsg: string }> {
+    public static async getUserByEmail(email: string): Promise<{ user: userModel; errMsg: string }> {
         try {
             let user = await userModel.findOne<userModel>({ where: { email: email } });
             if (user == null) {
@@ -103,9 +99,7 @@ class userManager {
         }
     }
 
-    public static async getUserByCookie(
-        cookie: string
-    ): Promise<{ user: IUserInfo; errMsg: string }> {
+    public static async getUserByCookie(cookie: string): Promise<{ user: IUserInfo; errMsg: string }> {
         if (config.serverType === "center") {
             return await this.centerGetUserByCookie(cookie);
         } else {
@@ -113,9 +107,7 @@ class userManager {
         }
     }
 
-    public static async regionGetUserByCookie(
-        cookie: string
-    ): Promise<{ user: IUserInfo; errMsg: string }> {
+    public static async regionGetUserByCookie(cookie: string): Promise<{ user: IUserInfo; errMsg: string }> {
         //from localCache
         const nowTime = moment.now();
         let userInfo = userManager.UserLocalCache[cookie];
@@ -140,7 +132,7 @@ class userManager {
         let url = config.center_host + "/api/region/getuserinfo";
         let data = await requestTool.post(url, { cookie: cookie });
         console.log(data);
-        
+
         if (data.status === 0) {
             const userInfo: IUserInfo = data.data;
             //setToLocalCache
@@ -160,9 +152,7 @@ class userManager {
         return { user: null, errMsg: data.msg };
     }
 
-    public static async centerGetUserByCookie(
-        cookie: string
-    ): Promise<{ user: IUserInfo; errMsg: string }> {
+    public static async centerGetUserByCookie(cookie: string): Promise<{ user: IUserInfo; errMsg: string }> {
         //from localCache
         const nowTime = moment.now();
         let userInfo = userManager.UserLocalCache[cookie];

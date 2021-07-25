@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 10:47:59
- * @LastEditTime: 2021-07-08 17:44:10
+ * @LastEditTime: 2021-07-25 12:14:34
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/db/SqlTool.ts
@@ -20,6 +20,7 @@ class SqlTool {
             port: config.db_port,
             dialect: "mysql",
             pool: { max: 6, min: 0, idle: 10000 },
+            logging: false
         });
     }
 

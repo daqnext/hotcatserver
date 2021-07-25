@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 14:42:16
- * @LastEditTime: 2021-07-09 13:45:45
+ * @LastEditTime: 2021-07-25 13:12:55
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/commonController.ts
@@ -10,6 +10,7 @@ import koa from "koa";
 import router from "koa-router";
 import { captchaManager } from "../../../manager/project/captchaManager";
 import { categoryManager } from "../../../manager/project/categoryManager";
+import { languageManager } from "../../../manager/project/languageManager";
 import { Utils } from "../../../utils/utils";
 
 class commonController {
@@ -18,6 +19,7 @@ class commonController {
         //config all the get requests
         Router.get("/api/getcaptcha", C.getCaptcha);
         Router.get("/api/getcategory", C.getCategory);
+        Router.get("/api/getlanguage", C.getLanguage);
 
         //config all the post requests
         return C;
@@ -56,6 +58,21 @@ class commonController {
         ctx.body = {
             status: 0,
             data: categoryMap,
+        };
+    }
+
+    async getLanguage(ctx:koa.Context,next:koa.Next){
+        const { languageMap, errMsg } = await languageManager.centerGetAllLanguage();
+        if (languageMap == null) {
+            ctx.body = {
+                status: 1,
+                errMsg: errMsg,
+            };
+            return;
+        }
+        ctx.body = {
+            status: 0,
+            data: languageMap,
         };
     }
 }

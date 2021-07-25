@@ -5,15 +5,15 @@
   "main": "index.js",
   "scripts": {
     "prepare_data_dev": "ts-node src/inidata/iniMain.ts dev_center_config",
-    "prepare_data_prod": "tsc && node dist/inidata/iniMain.js prod_config",
+    "prepare_data_prod": "tsc && node dist/inidata/iniMain.js prod_center_config",
     "dev_center": "nodemon --config nodemon.json src/subapp/centerapp/app.ts  dev_center_config",
     "dev_region": "nodemon --config nodemon.json src/subapp/regionapp/app.ts  dev_region_config",
     "test_dev": "ts-mocha  test/*.ts dev_config --timeout 15000 --exit",
     "test_prod": "ts-mocha test/*.ts prod_config --timeout 15000 --exit",
     "start_center": "tsc && node dist/cluster.js prod_config",
     "start_region": "tsc && node dist/cluster.js prod_config",
-    "pm2_start_center": "tsc && pm2 start pm2/prod_center.json",
-    "pm2_start_region": "tsc && pm2 start pm2/prod_region.json"
+    "pm2_start_center": "tsc && pm2 start pm2/hotcat_center_production.json",
+    "pm2_start_region": "tsc && pm2 start pm2/hotcat_region_production.json"
   },
   "author": "LEO",
   "license": "MIT",

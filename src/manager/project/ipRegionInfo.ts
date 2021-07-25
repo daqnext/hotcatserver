@@ -11,7 +11,7 @@ import fs from "fs";
 import csvParse from "csv-parse/lib/sync";
 import path from "path";
 import { logger, rootDIR } from "../../global";
-import {  IIpInfo } from "../../interface/interface";
+import { IIpInfo } from "../../interface/interface";
 import { regionMapConfigModel } from "../../model/regionMapConfigModel";
 
 class ipRegionInfo {
@@ -34,18 +34,18 @@ class ipRegionInfo {
         }
     }
 
-    static async updateAreaToRegionMap(){
+    static async updateAreaToRegionMap() {
         try {
-            const result = await regionMapConfigModel.findAll()
+            const result = await regionMapConfigModel.findAll();
             //console.log(result);
-            const aToRMap: { [key: string]: string } = {}
+            const aToRMap: { [key: string]: string } = {};
             for (let i = 0; i < result.length; i++) {
-                aToRMap[result[i].areaName]=result[i].region
+                aToRMap[result[i].areaName] = result[i].region;
             }
-            this.areaToRegionMap=aToRMap
+            this.areaToRegionMap = aToRMap;
             console.log(this.areaToRegionMap);
         } catch (error) {
-            console.error("updateAreaToRegionMap error:",error);
+            console.error("updateAreaToRegionMap error:", error);
         }
     }
 
@@ -61,13 +61,13 @@ class ipRegionInfo {
 
         const countryName = ip2loc.IP2Location_get_country_long(ip);
         const continent = this.countryToContinentMap[countryCode] ? this.countryToContinentMap[countryCode] : "unknown";
-        
-        let region:string=this.areaToRegionMap[countryName]
-        if (region===null||region==="") {
-            region = this.areaToRegionMap[continent]
+
+        let region: string = this.areaToRegionMap[countryName];
+        if (region === null || region === "") {
+            region = this.areaToRegionMap[continent];
         }
-        if (region===null||region==="") {
-            region = this.areaToRegionMap[continent]
+        if (region === null || region === "") {
+            region = this.areaToRegionMap[continent];
         }
         region = "us-west-1c";
 
