@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 12:24:01
- * @LastEditTime: 2021-07-24 15:16:52
+ * @LastEditTime: 2021-07-25 14:51:00
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/livestreamManager.ts
@@ -12,7 +12,7 @@ import randomString from "string-random";
 import moment from "moment";
 import _ from "lodash";
 import fs, { watch } from "fs";
-import { liveServerManager } from "./liveServerManager";
+import { liveServerManager } from "./liveserverManager";
 import { redisTool } from "../../redis/redisTool";
 import { ELiveStreamStatus, ILiveStream } from "../../interface/interface";
 import { QueryTypes, Sequelize } from "sequelize/types";

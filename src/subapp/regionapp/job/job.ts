@@ -11,7 +11,7 @@ import schedule from 'node-schedule';
 import { categoryManager } from '../../../manager/project/categoryManager';
 import { ipRegionInfo } from '../../../manager/project/ipRegionInfo';
 import { languageManager } from '../../../manager/project/languageManager';
-import { liveServerManager } from '../../../manager/project/liveServerManager';
+import { liveServerManager } from '../../../manager/project/liveserverManager';
 
 function InitJob(){
     ipRegionInfo.init()

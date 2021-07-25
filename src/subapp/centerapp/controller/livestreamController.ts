@@ -31,7 +31,7 @@ import { Utils } from "../../../utils/utils";
 import { livestreamManager } from "../../../manager/project/livestreamManager";
 import { ELiveStreamStatus, ILiveStream, IUserInfo } from "../../../interface/interface";
 import { ipRegionInfo } from "../../../manager/project/ipRegionInfo";
-import { liveServerManager } from "../../../manager/project/liveServerManager";
+import { liveServerManager } from "../../../manager/project/liveserverManager";
 import { config } from "../../../config/conf";
 import { requestTool } from "../../../utils/request";
 
