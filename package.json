@@ -12,8 +12,8 @@
     "test_prod": "ts-mocha test/*.ts prod_config --timeout 15000 --exit",
     "start_center": "tsc && node dist/cluster.js prod_config",
     "start_region": "tsc && node dist/cluster.js prod_config",
-    "pm2_start_center": "tsc && pm2 start pm2/hotcat_center_production.json",
-    "pm2_start_region": "tsc && pm2 start pm2/hotcat_region_production.json"
+    "pm2_start_center": "tsc && pm2 start hotcat_center_production.json",
+    "pm2_start_region": "tsc && pm2 start hotcat_region_production.json"
   },
   "author": "LEO",
   "license": "MIT",

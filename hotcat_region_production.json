@@ -1,8 +1,8 @@
 {
     "apps": [{
-        "name": "hotcat_center_production",
+        "name": "hotcat_region_production",
         "script": "./dist/subapp/regionapp/app.js",
-        "cwd": "~/hotcatsever",
+        "cwd": "",
         "watch": [
             "./dist/"
         ],

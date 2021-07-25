@@ -2,7 +2,7 @@
     "apps": [{
         "name": "hotcat_center_production",
         "script": "./dist/subapp/centerapp/app.js",
-        "cwd": "~/hotcatsever",
+        "cwd": "",
         "watch": [
             "./dist/"
         ],
