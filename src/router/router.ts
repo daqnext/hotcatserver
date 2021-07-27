@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-09 08:50:53
- * @LastEditTime: 2021-07-25 00:41:54
+ * @LastEditTime: 2021-07-26 10:29:14
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/router/router.ts
@@ -47,8 +47,19 @@ class AppRouter {
         });
         const Router = new router();
 
+        //cross
+        if (allowCors) {
+            App.use(
+                cors({
+                    origin: function(ctx) {    
+                        return '*';
+                    },
+                    credentials: true, 
+                })
+            );
+        }
+        
         App.use(koaLogger);
-
             //initialize the error handler
             App.use(async (ctx, next) => {
                 try {
@@ -68,17 +79,6 @@ class AppRouter {
                 }
             });
 
-            //cross
-            if (allowCors) {
-                App.use(
-                    cors({
-                        credentials: true, 
-                    })
-                );
-            }
-            
-
-        
             App.use(
                 bodyParser({
                     //multipart: true,

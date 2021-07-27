@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 14:19:10
- * @LastEditTime: 2021-07-23 10:29:19
+ * @LastEditTime: 2021-07-26 10:27:57
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/model/livestreamModel.ts
@@ -48,7 +48,7 @@ livestreamModel.init(
         category: { type: DataTypes.STRING(32), allowNull: false },
         language: { type: DataTypes.STRING(32), allowNull: false, defaultValue: "English" },
         name: {
-            type: DataTypes.STRING(32),
+            type: DataTypes.STRING(150),
             allowNull: false,
         },
         userId: {

@@ -2,9 +2,10 @@
     "apps": [{
         "name": "hotcat_center_production",
         "script": "./dist/subapp/centerapp/app.js",
+        "args": "['prod_center_config']",
         "cwd": "",
         "watch": [
-            "./dist/"
+            
         ],
         "ignore_watch": [
             "./dist/cmd/"

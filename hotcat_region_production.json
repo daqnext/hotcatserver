@@ -2,9 +2,10 @@
     "apps": [{
         "name": "hotcat_region_production",
         "script": "./dist/subapp/regionapp/app.js",
+        "args": "['prod_region_config']",
         "cwd": "",
         "watch": [
-            "./dist/"
+            
         ],
         "ignore_watch": [
             "./dist/cmd/"
