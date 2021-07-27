@@ -1,6 +1,6 @@
  import {SqlTool} from "../db/SqlTool"
  import {logger} from "../global"
- import {userModel,userModel_createData} from "../model/userModel"
+ import {testModel,testModel_createData} from "../model/testModel"
  
  class iniSqlData{
 
@@ -12,11 +12,11 @@
       }
 
       //create all the  imported tables if exist will not overwrite
-      await SqlTool.getSingleInstance().sequelize.sync({force:true});
+      await SqlTool.getSingleInstance().sequelize.sync({force:false});
 
       
       //insert all test data into database 
-      await userModel_createData();
+      await testModel_createData();
       
     }
  }

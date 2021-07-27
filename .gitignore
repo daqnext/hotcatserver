@@ -3,8 +3,9 @@
 /dist
 /log/*
 !log/.keep
+/pm2logs/*
+!pm2logs/.keep
 /data/*
 !/data/.keep
 /.vscode
 /node_modules
-

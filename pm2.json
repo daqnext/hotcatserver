@@ -1,0 +1,26 @@
+{
+"apps": [
+                {
+                        "name": "server-template",
+                        "script": "./dist/app.js",
+                        "cwd": "",
+                        "env": {
+                            "NODE_ENV": "production"
+                        },
+                        "watch": [
+                            "./dist"
+                        ],
+                        "ignore_watch": [
+                            "./dist/cmd/"
+                        ],
+                        "args":["prod_config"],
+                        "instances": "max",
+                        "exec_mode": "cluster",
+                        "error_file": "./pm2logs/error.log",
+                        "out_file": "./pm2logs/app-out.log",
+                        "log_date_format": "YYYY-MM-DD HH:mm:ss",
+                        "restart_delay": 5000
+                 }
+        ]
+
+}

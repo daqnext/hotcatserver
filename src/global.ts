@@ -22,8 +22,11 @@ configure({
     categories: {
         default: { appenders: config.logtypes, level: config.loglevel },
     },
+
+    pm2: process.env.NODE_ENV === 'production', //if run with PM2 in production
+    pm2InstanceVar: 'INSTANCE_ID' ,
+    disableClustering: true
     
-    disableClustering:true
 });
 
 let logger=getLogger('default');
@@ -41,8 +44,6 @@ class Time {
       }
 }
 
-
- 
 
 
 export {

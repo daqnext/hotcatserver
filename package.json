@@ -1,13 +1,14 @@
 {
-  "name": "hotcat",
+  "name": "server_template",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "prepare_data_dev": "ts-node src/inidata/iniMain.ts dev_config",
     "prepare_data_prod": "tsc && node dist/inidata/iniMain.js prod_config",
-    "start": "tsc && node dist/cluster.js prod_config",
-    "dev": "nodemon --config nodemon.json src/app.ts  dev_config",
+    "dev": "nodemon --config nodemon.json src/app.ts dev_config",
+    "start": "tsc && pm2 start pm2.json",
+    "stop": "pm2 delete pm2.json",
     "test_dev": "ts-mocha  test/*.ts dev_config --timeout 15000 --exit",
     "test_prod": "ts-mocha test/*.ts prod_config --timeout 15000 --exit"
   },
@@ -31,6 +32,7 @@
     "@types/koa-bodyparser": "^4.3.1",
     "@types/koa-router": "^7.4.2",
     "@types/log4js": "^2.3.5",
+    "axios": "^0.21.1",
     "ioredis": "^4.27.6",
     "koa": "^2.13.1",
     "koa-bodyparser": "^4.3.0",
@@ -38,7 +40,12 @@
     "koa-logger": "^3.2.1",
     "koa-router": "^10.0.0",
     "log4js": "^6.3.0",
+    "moment": "^2.29.1",
     "mysql2": "^2.2.5",
-    "sequelize": "^6.6.4"
+    "node-schedule": "^2.0.0",
+    "pm2": "^5.1.0",
+    "query-string": "^7.0.1",
+    "sequelize": "^6.6.4",
+    "string-random": "^0.1.3"
   }
 }

@@ -11,7 +11,7 @@ module.exports = {
   db_port:'3306',
   db_username:'root',
   db_password:'',
-  db_name:'hotcat',
+  db_name:'server_template',
 
   //redis
   redis_host:'127.0.0.1',
@@ -21,7 +21,7 @@ module.exports = {
   redis_family:4,
 
   //cache
-  cache_prefix:'hotcat_prod_'
+  cache_prefix:'temp_prod_'
  
 };
 
