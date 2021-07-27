@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:58:13
- * @LastEditTime: 2021-07-22 16:46:07
+ * @LastEditTime: 2021-07-27 22:31:17
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/srsNotifyController.ts
@@ -40,7 +40,7 @@ class srsNotifyController {
     async onPublish(ctx: koa.Context, next: koa.Next) {
         const msg: IStreamOnPublishMsg = ctx.request.body;
         console.log(msg);
-        // app: 'live',
+        //   app: 'live',
         //   flashver: 'FMLE/3.0 (compatible; FMSc/1.0)',
         //   swfurl: 'rtmp://192.168.56.101/live?secret=asdiwef',
         //   tcurl: 'rtmp://192.168.56.101/live?secret=asdiwef',

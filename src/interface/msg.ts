@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 11:38:23
- * @LastEditTime: 2021-07-23 16:35:06
+ * @LastEditTime: 2021-07-28 00:27:19
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/interface/user.ts
@@ -78,10 +78,9 @@ export interface IQueryLivestreamMsg{
 }
 
 export interface IGetVideoListMsg{
-    category:string,
-    isOnLive:boolean,
+    lastIndexMap:{[key:string]:number}
+    category:string[],
     count:number,
-    offset:number,
 }
 
 export interface ISearchVideoMsg{

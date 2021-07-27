@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 11:34:52
- * @LastEditTime: 2021-07-21 15:20:30
+ * @LastEditTime: 2021-07-27 22:32:33
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/userController.ts
@@ -22,6 +22,7 @@ import { resp } from "../../../utils/resp";
 import { requestTool } from "../../../utils/request";
 import { config } from "../../../config/conf";
 import { emailVerifyManager } from "../../../manager/project/emailVerifyManager";
+import { captchaManager } from "../../../manager/project/captchaManager";
 
 const upload = multer({
     limits: {
@@ -58,15 +59,15 @@ class userController {
         const msg: IUserRegisterMsg = ctx.request.body;
         console.log(msg);
         //check captcha
-        // const isCapOk=await captchaManager.Verity(msg.captchaId,msg.captcha)
-        // if (!isCapOk) {
-        //   ctx.body={
-        //     status:1,
-        //     data:null,
-        //     msg:"Captcha error"
-        //   }
-        //   return
-        // }
+        const isCapOk=await captchaManager.Verity(msg.captchaId,msg.captcha)
+        if (!isCapOk) {
+          ctx.body={
+            status:1,
+            data:null,
+            msg:"Captcha error"
+          }
+          return
+        }
 
         //check email format
         if (!Utils.isEmailLegal(msg.email)) {

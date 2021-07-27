@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:04:26
- * @LastEditTime: 2021-07-25 01:09:27
+ * @LastEditTime: 2021-07-28 00:27:39
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/livestreamController.ts
@@ -368,8 +368,10 @@ class livestreamController {
             resp.send(ctx, 1, null, "no program info");
             return;
         }
+        console.log(msg);
+        
 
-        const result=await livestreamManager.GetLiveStreamByRank(msg.category,msg.count)
+        const result=await livestreamManager.GetLiveStreamList(msg.category,msg.lastIndexMap,msg.count)
         console.log(result);
         resp.send(ctx,0,result)
     }

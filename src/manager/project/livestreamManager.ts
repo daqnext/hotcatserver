@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 12:24:01
- * @LastEditTime: 2021-07-25 14:51:00
+ * @LastEditTime: 2021-07-28 00:42:39
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/livestreamManager.ts
@@ -20,6 +20,7 @@ import { SqlTool } from "../../db/SqlTool";
 import path from "path";
 import { rootDIR } from "../../global";
 import { categoryManager } from "./categoryManager";
+import { start } from "repl";
 
 //stream cache
 const LiveStreamCache_id_string = "LiveStreamInfo_string_id_";
@@ -362,6 +363,71 @@ class livestreamManager {
             return null;
         }
     }
+
+    static async GetLiveStreamList(category:string[],lastIndexMap:{[key:string]:number},count:number){
+        // const {categoryMap}=await categoryManager.centerGetAllCategory()
+        // console.log(categoryMap);
+        // console.log(category); 
+        // const excludeCategory:string[]=[]
+        // for (let key in categoryMap) {
+        //     if (!category.includes(key)) {
+        //         excludeCategory.push(key)
+        //     }
+        // }
+        // console.log(excludeCategory);
+
+        console.log(lastIndexMap);
+        
+        
+        
+        let leftCount=count
+        
+        const idsStr:string[]=[]
+        for (let i = 0; i < category.length; i++) {
+            const key=WatchRankByCategory_category_zset+category[i]
+            let startIndex=lastIndexMap[category[i]]
+            if (startIndex==null) {
+                startIndex=0
+            }else{
+                startIndex++
+            }
+
+            console.log("start index:",startIndex);
+            
+            const count=Math.floor(leftCount/(category.length-i))
+            console.log(count);
+            
+            const endIndex=startIndex+count-1
+            console.log("endIndex:",endIndex);
+            
+            
+            const strArray = await redisTool.getSingleInstance().redis.zrange(key,startIndex,endIndex)
+            console.log(category[i],"get ids count",strArray.length);
+            console.log("leftCount:",leftCount);
+            if (strArray.length<=0) {
+                continue
+            }
+
+            lastIndexMap[category[i]]=endIndex
+            idsStr.push(...strArray)
+            
+            
+            leftCount=leftCount-strArray.length
+            
+            
+        }
+        if (idsStr.length<=0) {
+            return { id: [], contentMap: {},lastIndexMap:lastIndexMap };
+        }
+
+        
+
+        const ids: number[] = idsStr.map((value) => parseInt(value));
+        const content = await this.batchGetLiveStream(ids);
+        return { id: ids, contentMap: content,lastIndexMap:lastIndexMap };
+
+    }
+    
 
     static async GetLiveStreamByRank(category: string | ELiveStreamStatus.ONLIVE, count: number) {
         const key = WatchRankByCategory_category_zset + category;
