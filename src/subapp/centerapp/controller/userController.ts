@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 11:34:52
- * @LastEditTime: 2021-07-27 22:32:33
+ * @LastEditTime: 2021-07-28 08:31:51
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/userController.ts
@@ -169,16 +169,16 @@ class userController {
         const msg: IUserLoginMsg = ctx.request.body;
         console.log(msg);
 
-        // check captcha
-        // const isCapOk=await captchaManager.Verity(msg.captchaId,msg.captcha)
-        // if (!isCapOk) {
-        //   ctx.body={
-        //     status:1,
-        //     data:null,
-        //     msg:"Captcha error"
-        //   }
-        //   return
-        // }
+        //check captcha
+        const isCapOk=await captchaManager.Verity(msg.captchaId,msg.captcha)
+        if (!isCapOk) {
+          ctx.body={
+            status:1,
+            data:null,
+            msg:"Captcha error"
+          }
+          return
+        }
 
         //check email format
         if (!Utils.isEmailLegal(msg.email)) {

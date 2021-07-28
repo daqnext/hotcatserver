@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-13 09:08:07
- * @LastEditTime: 2021-07-23 11:05:09
+ * @LastEditTime: 2021-07-28 15:45:03
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/subapp/centerapp/job/job.ts
@@ -41,8 +41,8 @@ function StartScheduleJob() {
 
     //only 1 process
     if (process.env.NODE_APP_INSTANCE === "0" || config.node_env === "develop") {
-        //update watched every 5 mins
-        schedule.scheduleJob("ScheduleUpdateWatched", "5 0/5 * * * *", livestreamManager.ScheduleUpdateWatched);
+        //update watched every 2 mins
+        schedule.scheduleJob("ScheduleUpdateWatched", "5 0/2 * * * *", livestreamManager.ScheduleUpdateWatched);
     }
 }
 

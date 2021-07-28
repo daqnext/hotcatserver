@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 12:24:01
- * @LastEditTime: 2021-07-28 00:42:39
+ * @LastEditTime: 2021-07-28 15:35:25
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/livestreamManager.ts
@@ -245,9 +245,11 @@ class livestreamManager {
                     //remove form Online rank
                     redisTool.getSingleInstance().redis.zrem(WatchRankByCategory_category_zset + ELiveStreamStatus.ONLIVE, id + "");
 
-                    if (duration >= 8000) {
-                        redisTool.getSingleInstance().redis.zincrby(WatchRankByCategory_category_zset + oldStreamInfo.category, 0, id + "");
-                        redisTool.getSingleInstance().redis.zincrby(WatchRankTotal_zset, 0, id + "");
+                    if (duration < 8000) {
+                        // redisTool.getSingleInstance().redis.zincrby(WatchRankByCategory_category_zset + oldStreamInfo.category, 0, id + "");
+                        // redisTool.getSingleInstance().redis.zincrby(WatchRankTotal_zset, 0, id + "");
+                        redisTool.getSingleInstance().redis.zrem(WatchRankByCategory_category_zset + oldStreamInfo.category,id+"")
+                        redisTool.getSingleInstance().redis.zrem(WatchRankTotal_zset, id + "")
                     }
 
                     break;
@@ -258,6 +260,8 @@ class livestreamManager {
                     if (watched !== null) {
                         count = parseInt(watched);
                     }
+                    redisTool.getSingleInstance().redis.zincrby(WatchRankByCategory_category_zset + oldStreamInfo.category, 0, id + "");
+                    redisTool.getSingleInstance().redis.zincrby(WatchRankTotal_zset, 0, id + "");
                     redisTool.getSingleInstance().redis.zincrby(WatchRankByCategory_category_zset + ELiveStreamStatus.ONLIVE, count, id + "");
                     break;
             }
@@ -364,6 +368,27 @@ class livestreamManager {
         }
     }
 
+    static async GetOnLiveStreamList(lastIndexMap:{[key:string]:number},count:number){
+        const key=WatchRankByCategory_category_zset+ELiveStreamStatus.ONLIVE 
+        let startIndex=lastIndexMap[ELiveStreamStatus.ONLIVE]
+            if (startIndex==null) {
+                startIndex=0
+            }else{
+                startIndex++
+            } 
+        const endIndex=startIndex+count-1
+        const idsStr = await redisTool.getSingleInstance().redis.zrange(key,startIndex,endIndex)
+        //console.log(category[i],"get ids count",strArray.length);
+        if (idsStr===null||idsStr.length<=0) {
+            return { id: [], contentMap: {},lastIndexMap:lastIndexMap };
+        }
+        lastIndexMap[ELiveStreamStatus.ONLIVE]=startIndex+idsStr.length
+
+        const ids: number[] = idsStr.map((value) => parseInt(value));
+        const content = await this.batchGetLiveStream(ids);
+        return { id: ids, contentMap: content,lastIndexMap:lastIndexMap };
+    }
+
     static async GetLiveStreamList(category:string[],lastIndexMap:{[key:string]:number},count:number){
         // const {categoryMap}=await categoryManager.centerGetAllCategory()
         // console.log(categoryMap);
@@ -392,23 +417,23 @@ class livestreamManager {
                 startIndex++
             }
 
-            console.log("start index:",startIndex);
+            //console.log("start index:",startIndex);
             
             const count=Math.floor(leftCount/(category.length-i))
-            console.log(count);
+            //console.log(count);
             
             const endIndex=startIndex+count-1
-            console.log("endIndex:",endIndex);
+            //console.log("endIndex:",endIndex);
             
             
             const strArray = await redisTool.getSingleInstance().redis.zrange(key,startIndex,endIndex)
-            console.log(category[i],"get ids count",strArray.length);
-            console.log("leftCount:",leftCount);
+            //console.log(category[i],"get ids count",strArray.length);
+            //console.log("leftCount:",leftCount);
             if (strArray.length<=0) {
                 continue
             }
 
-            lastIndexMap[category[i]]=endIndex
+            lastIndexMap[category[i]]=startIndex+strArray.length
             idsStr.push(...strArray)
             
             
@@ -429,19 +454,19 @@ class livestreamManager {
     }
     
 
-    static async GetLiveStreamByRank(category: string | ELiveStreamStatus.ONLIVE, count: number) {
-        const key = WatchRankByCategory_category_zset + category;
-        const idsStr = await redisTool.getSingleInstance().redis.zrange(key, 0, count - 1);
-        console.log(idsStr);
+    // static async GetLiveStreamByRank(category: string | ELiveStreamStatus.ONLIVE, count: number) {
+    //     const key = WatchRankByCategory_category_zset + category;
+    //     const idsStr = await redisTool.getSingleInstance().redis.zrange(key, 0, count - 1);
+    //     console.log(idsStr);
 
-        const ids: number[] = idsStr.map((value) => parseInt(value));
-        console.log(ids);
+    //     const ids: number[] = idsStr.map((value) => parseInt(value));
+    //     console.log(ids);
 
-        const content = await this.batchGetLiveStream(ids);
-        console.log(content);
+    //     const content = await this.batchGetLiveStream(ids);
+    //     console.log(content);
 
-        return { id: ids, contentMap: content };
-    }
+    //     return { id: ids, contentMap: content };
+    // }
 
     // batch get liveStream infos
     static async batchGetLiveStream(ids: number[]) {

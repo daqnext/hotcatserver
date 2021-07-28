@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:04:26
- * @LastEditTime: 2021-07-28 00:27:39
+ * @LastEditTime: 2021-07-28 15:24:42
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/livestreamController.ts
@@ -370,10 +370,16 @@ class livestreamController {
         }
         console.log(msg);
         
-
-        const result=await livestreamManager.GetLiveStreamList(msg.category,msg.lastIndexMap,msg.count)
-        console.log(result);
-        resp.send(ctx,0,result)
+        if (msg.isOnlyOnLive) {
+            const result=await livestreamManager.GetOnLiveStreamList(msg.lastIndexMap,msg.count)
+            console.log(result);
+            resp.send(ctx,0,result)
+        }else{
+            const result=await livestreamManager.GetLiveStreamList(msg.category,msg.lastIndexMap,msg.count)
+            console.log(result);
+            resp.send(ctx,0,result)
+        }
+        
     }
 
     async watching(ctx: koa.Context, next: koa.Next) {
