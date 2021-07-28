@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 12:24:01
- * @LastEditTime: 2021-07-28 15:35:25
+ * @LastEditTime: 2021-07-28 17:52:10
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/livestreamManager.ts
@@ -276,7 +276,7 @@ class livestreamManager {
     static async DeleteLiveStream(streamId: number, secret: string): Promise<boolean> {
         try {
             const record = await livestreamModel.findOne({
-                attributes: ["id", "region", ["cover_img_url", "coverImgUrl"]],
+                attributes: ["id", "region", ["cover_img_url", "coverImgUrl"],"category"],
                 where: {
                     id: streamId,
                     secret: secret,
@@ -297,11 +297,16 @@ class livestreamManager {
                     fs.unlinkSync(saveFilePath);
                 }
 
-                //delete record
 
                 //delete redis
                 const key = LiveStreamCache_id_string + streamId;
-                redisTool.getSingleInstance().redis.del(key);
+                const pipe=redisTool.getSingleInstance().redis.pipeline()
+                pipe.del(key);
+                pipe.zrem(WatchRankByCategory_category_zset+record.category,streamId)
+                pipe.zrem(WatchRankByCategory_category_zset+ELiveStreamStatus.ONLIVE,streamId)
+                pipe.zrem(WatchRankTotal_zset,streamId)
+                pipe.hdel(LiveStreamWatchedIncrease_hash,streamId+"")
+                pipe.exec()
 
                 return true;
             }

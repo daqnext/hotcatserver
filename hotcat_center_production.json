@@ -3,10 +3,7 @@
         "name": "hotcat_center_production",
         "script": "./dist/subapp/centerapp/app.js",
         "args": "['prod_center_config']",
-        "cwd": "",
-        "watch": [
-            
-        ],
+        "cwd": "/root/hotcatserver",
         "ignore_watch": [
             "./dist/cmd/"
         ],
