@@ -12,8 +12,8 @@
         ],
         "instances": "max",
         "exec_mode": "cluster",
-        "error_file": "./logs/error.log",
-        "out_file": "./logs/app-out.log",
+        "error_file": "./pm2log/error.log",
+        "out_file": "./pm2log/app-out.log",
         "log_date_format": "YYYY-MM-DD HH:mm:ss",
         "restart_delay": 5000
     }]

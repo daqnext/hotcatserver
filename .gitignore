@@ -3,6 +3,7 @@
 /dist
 /log/*
 /logs/*
+/pm2log/*
 !log/.keep
 /data/*
 !/data/.keep
