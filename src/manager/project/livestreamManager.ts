@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 12:24:01
- * @LastEditTime: 2021-07-28 17:52:10
+ * @LastEditTime: 2021-08-01 18:59:14
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/livestreamManager.ts
@@ -80,7 +80,7 @@ class livestreamManager {
                 status: "ready",
                 duration: 0,
                 createTimeStamp: moment.now(),
-                startTimeStamp: 0,
+                startTimeStamp: moment.now(),
                 endTimeStamp: 0,
                 coverImgUrl: coverImgUrl,
             });
@@ -273,6 +273,38 @@ class livestreamManager {
         }
     }
 
+    static async FinishUpload(streamId:number){
+
+        //get old info
+        const oldStreamInfo = await this.GetLiveStreamById(streamId);
+        if (oldStreamInfo === null) {
+            return false;
+        }
+        
+        const watched=Math.floor(Math.random()*500+500)
+        const updateData: any = {
+            status: ELiveStreamStatus.END,
+            duration:100000,
+            endTimeStamp:moment.now(),
+            watched:watched
+        };
+
+        
+        const [count] = await livestreamModel.update(updateData, { where: { id:streamId} });
+
+        if (count <= 0) {
+            return false;
+        }
+
+        //update redis
+        this.updateStreamInfoInRedis(streamId, updateData);
+
+        redisTool.getSingleInstance().redis.zincrby(WatchRankByCategory_category_zset + oldStreamInfo.category, watched, streamId + "");
+        redisTool.getSingleInstance().redis.zincrby(WatchRankTotal_zset, watched, streamId + "");
+        
+        return true
+    }
+
     static async DeleteLiveStream(streamId: number, secret: string): Promise<boolean> {
         try {
             const record = await livestreamModel.findOne({
@@ -364,8 +396,8 @@ class livestreamManager {
             };
 
             //set to redis
-            this.setToRedis(streamInfo, 3600);
-
+            this.setToRedis(streamInfo, 1800);           
+            
             return streamInfo;
         } catch (error) {
             console.error("query live stream by id error", error, "streamId=", streamId);
@@ -532,11 +564,12 @@ class livestreamManager {
                     cdnRecordM3u8Link: streamUrl.cdnRecordM3u8Link,
                 };
 
+                
                 const str = JSON.stringify(streamInfo);
                 streamInfoMap[streamInfo.id] = str;
                 if (str !== "") {
                     const key = LiveStreamCache_id_string + streamInfo.id;
-                    pipe.set(key, str, "EX", 3600);
+                    pipe.set(key, str, "EX", 1800);
                 }
             }
             pipe.exec();

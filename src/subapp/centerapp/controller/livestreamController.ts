@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:04:26
- * @LastEditTime: 2021-07-28 15:24:42
+ * @LastEditTime: 2021-07-30 11:04:32
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/livestreamController.ts
@@ -15,6 +15,7 @@ import {
     IDeleteCoverMsg,
     IDeleteLivestreamMsg,
     IFinishLivestreamMsg,
+    IFinishUploadMsg,
     IGetVideoListMsg,
     IQueryLivestreamMsg,
     IUpdateLivestreamMsg,
@@ -61,6 +62,8 @@ class livestreamController {
         Router.post("/api/livestream/finish", auth.ParseTokenMiddleware(), C.finishLivestream);
         Router.post("/api/livestream/managelist", auth.ParseTokenMiddleware(), C.manageListLivestream);
 
+        Router.post("/api/livestream/finishupload", auth.ParseTokenMiddleware(),auth.AuthMiddleware(["admin"]), C.finishUploadLivestream);
+
         Router.post("/api/livestream/get", C.getLivestream);
         Router.post("/api/livestream/query", auth.ParseTokenMiddleware(), C.queryLivestream);
 
@@ -89,6 +92,8 @@ class livestreamController {
         //user ip
         const ip: string = Utils.getRequestIP(ctx.request);
         const ipInfo = ipRegionInfo.getIpInfo(ip);
+        console.info(ip)
+        console.info(ipInfo)
 
         //liveServer
         const liveServer = await liveServerManager.GetLiveServerByRegion(ipInfo.region);
@@ -477,6 +482,18 @@ class livestreamController {
         }
         resp.send(ctx, 0);
         return;
+    }
+
+    async finishUploadLivestream(ctx: koa.Context, next: koa.Next){
+        const msg: IFinishUploadMsg = ctx.request.body;
+        console.log(msg);
+
+        const result=await livestreamManager.FinishUpload(msg.id)
+        if (result===false) {
+            resp.send(ctx, 1);
+        }
+
+        resp.send(ctx,0);
     }
 }
 

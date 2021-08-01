@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 15:19:51
- * @LastEditTime: 2021-07-21 15:32:56
+ * @LastEditTime: 2021-08-01 15:57:10
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/common/auth.ts
@@ -53,7 +53,9 @@ class auth{
                 return
             }
             
-            let userAuth=user.permission
+            let userAuth=user.permissionArray
+            console.log(userAuth);
+            
             let havePermission=false
             for (let index = 0; index < userAuth.length; index++) {
                 const auth = userAuth[index];

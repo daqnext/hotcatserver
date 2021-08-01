@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 11:34:52
- * @LastEditTime: 2021-07-28 08:31:51
+ * @LastEditTime: 2021-08-01 18:19:18
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/userController.ts
@@ -46,8 +46,9 @@ class userController {
         //config all the get requests
         Router.post("/api/user/register", C.userRegister);
         Router.post("/api/user/login", C.userLogin);
-        Router.get("/api/user/userinfo",auth.ParseTokenMiddleware(),C.userGetUserInfo)
-        Router.post("/api/user/getemailvcode",C.userGetEmailVcode)
+        Router.get("/api/user/userinfo", auth.ParseTokenMiddleware(), C.userGetUserInfo);
+        Router.post("/api/user/userverify", C.userVerify);
+        Router.post("/api/user/getemailvcode", C.userGetEmailVcode);
 
         Router.post("/api/user/uploadavatar", auth.ParseTokenMiddleware(), C.handleUploadAvatar);
 
@@ -59,14 +60,14 @@ class userController {
         const msg: IUserRegisterMsg = ctx.request.body;
         console.log(msg);
         //check captcha
-        const isCapOk=await captchaManager.Verity(msg.captchaId,msg.captcha)
+        const isCapOk = await captchaManager.Verity(msg.captchaId, msg.captcha);
         if (!isCapOk) {
-          ctx.body={
-            status:1,
-            data:null,
-            msg:"Captcha error"
-          }
-          return
+            ctx.body = {
+                status: 1,
+                data: null,
+                msg: "Captcha error",
+            };
+            return;
         }
 
         //check email format
@@ -90,12 +91,7 @@ class userController {
         }
 
         const name = msg.userName.toLowerCase();
-        if (
-            name === "admin" ||
-            name === "administrator" ||
-            name === "finance" ||
-            name === "contact"
-        ) {
+        if (name === "admin" || name === "administrator" || name === "finance" || name === "contact") {
             ctx.body = {
                 status: 1,
                 data: null,
@@ -105,10 +101,7 @@ class userController {
         }
 
         const { user, errMsg } = await userManager.createNewUser(msg);
-        if (
-            user === null &&
-            (errMsg === "user name already exist" || errMsg === "email already exist")
-        ) {
+        if (user === null && (errMsg === "user name already exist" || errMsg === "email already exist")) {
             ctx.body = {
                 status: 1,
                 data: null,
@@ -138,22 +131,24 @@ class userController {
         //create user in cdn
         const cdnUrl = config.cdn_host + "/api/v1/admin/hotcat/createliveaccuser";
         console.log(cdnUrl);
-        
+
         const sendData = {
             userName: user.name,
             id: user.id,
         };
-        const cdnUserInfo=await requestTool.post(cdnUrl,sendData,{headers:{
-            Accept:        "application/json",
-		    Authorization: "Basic " + config.cdn_requestToken,
-        }});
-        if (cdnUserInfo.status!==0) {
+        const cdnUserInfo = await requestTool.post(cdnUrl, sendData, {
+            headers: {
+                Accept: "application/json",
+                Authorization: "Basic " + config.cdn_requestToken,
+            },
+        });
+        if (cdnUserInfo.status !== 0) {
             //delete created user
-            await userManager.deleteUser(user.id)
-            resp.send(ctx,1,null,"create cdn user error,please try later")
-            return
+            await userManager.deleteUser(user.id);
+            resp.send(ctx, 1, null, "create cdn user error,please try later");
+            return;
         }
-        
+
         console.log(cdnUserInfo);
         //console.log(user);
         console.log(userInfo);
@@ -170,14 +165,14 @@ class userController {
         console.log(msg);
 
         //check captcha
-        const isCapOk=await captchaManager.Verity(msg.captchaId,msg.captcha)
+        const isCapOk = await captchaManager.Verity(msg.captchaId, msg.captcha,false);
         if (!isCapOk) {
-          ctx.body={
-            status:1,
-            data:null,
-            msg:"Captcha error"
-          }
-          return
+            ctx.body = {
+                status: 1,
+                data: null,
+                msg: "Captcha error",
+            };
+            return;
         }
 
         //check email format
@@ -241,25 +236,45 @@ class userController {
             status: 0,
             data: userInfo,
         };
+    }
 
+    async userVerify(ctx: koa.Context, next: koa.Next) {
+        const msg = ctx.request.body;
+        const verifykey = msg.verifykey;
+        if (!verifykey) {
+            ctx.body = {
+                result: false,
+            };
+            return;
+        }
+
+        const { user } = await userManager.getUserByCookie(verifykey);
+        if (user === null) {
+            ctx.body = {
+                result: false,
+            };
+            return;
+        }
+
+        ctx.body = { result: true, username: user.name, userid: user.id };
         
     }
 
-    async userGetUserInfo(ctx: koa.Context, next: koa.Next){
+    async userGetUserInfo(ctx: koa.Context, next: koa.Next) {
         const user: IUserInfo = ctx.state.user;
-        resp.send(ctx,0,user,null)
+        resp.send(ctx, 0, user, null);
     }
 
-    async userGetEmailVcode(ctx: koa.Context, next: koa.Next){
+    async userGetEmailVcode(ctx: koa.Context, next: koa.Next) {
         const msg: IUserGetEmailVCodeMsg = ctx.request.body;
         console.log(msg);
-        
-        const {success,err}=await emailVerifyManager.GenEmailVCode(msg.email)
+
+        const { success, err } = await emailVerifyManager.GenEmailVCode(msg.email);
         if (!success) {
-            resp.send(ctx,1,null,err)
-            return
+            resp.send(ctx, 1, null, err);
+            return;
         }
-        resp.send(ctx,0)
+        resp.send(ctx, 0);
     }
 
     async handleUploadAvatar(ctx: koa.Context, next: koa.Next) {
@@ -271,12 +286,7 @@ class userController {
                 resp.send(ctx, 1, null, "unsupported file");
                 return;
             }
-            if (
-                imgInfo.width < 100 ||
-                imgInfo.width > 200 ||
-                imgInfo.height < 100 ||
-                imgInfo.height > 200
-            ) {
+            if (imgInfo.width < 100 || imgInfo.width > 200 || imgInfo.height < 100 || imgInfo.height > 200) {
                 resp.send(ctx, 1, null, "image size error");
                 return;
             }
@@ -284,7 +294,7 @@ class userController {
             const user: IUserInfo = ctx.state.user;
             //let originName = path.normalize(ctx.file.originalname);
             //let extName = path.extname(originName);
-            let uploadFileUrl = path.join("/public", "avatar", user.id+"");
+            let uploadFileUrl = path.join("/public", "avatar", user.id + "");
             let saveFilePath = path.join(rootDIR, "../", uploadFileUrl);
             let dirName = path.dirname(saveFilePath);
             if (!fs.existsSync(dirName)) {

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 09:09:21
- * @LastEditTime: 2021-07-23 10:37:53
+ * @LastEditTime: 2021-07-30 14:04:05
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/interface/interface.ts
@@ -14,7 +14,8 @@ export interface IUserInfo {
     name: string;
     email: string;
     cookie: string;
-    permission: string[];
+    permission: string;
+    permissionArray?:string[];
     created: number;
 }
 export enum ELiveStreamStatus {

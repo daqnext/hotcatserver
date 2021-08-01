@@ -1,16 +1,19 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 15:17:23
- * @LastEditTime: 2021-07-13 11:54:22
+ * @LastEditTime: 2021-08-01 19:08:24
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/utils/utils.ts
  */
 import sizeOf from "image-size"
+import cmd from "node-cmd"
 
 const emailReg=/\w[-\w.+]*@([A-Za-z0-9][-A-Za-z0-9]+\.)+[A-Za-z]{1,14}/
 
 class Utils {
+  static instanceIp=""
+  
   static getRequestIP(req) {
     let ip =
       req.headers['x-real-ip'] ||
@@ -49,6 +52,17 @@ class Utils {
         return false
     }
     return true
+  }
+
+  static getInstanceIp(){
+    if (Utils.instanceIp==="") {
+      const result=cmd.runSync('curl http://instance-data/latest/meta-data/public-ipv4');
+      if (result) {
+        Utils.instanceIp=result.data
+        console.info("instance ip:",Utils.instanceIp)
+      }
+    }
+    return Utils.instanceIp
   }
   
 }

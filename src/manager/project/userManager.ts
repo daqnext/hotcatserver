@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 10:47:59
- * @LastEditTime: 2021-07-25 13:31:29
+ * @LastEditTime: 2021-08-01 14:31:16
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/userManager.ts
@@ -120,6 +120,7 @@ class userManager {
         const result = await redisTool.getSingleInstance().redis.get(key);
         if (result) {
             let userInfo: IUserInfo = JSON.parse(result);
+            userInfo.permissionArray=JSON.parse(userInfo.permission)
             //setToLocalCache
             userManager.UserLocalCache[cookie] = {
                 user: userInfo,
@@ -165,6 +166,7 @@ class userManager {
         const result = await redisTool.getSingleInstance().redis.get(key);
         if (result) {
             let userInfo: IUserInfo = JSON.parse(result);
+            //userInfo.permission=JSON.parse(userInfo.permission as string)
             //setToLocalCache
             userManager.UserLocalCache[cookie] = {
                 user: userInfo,
@@ -185,6 +187,7 @@ class userManager {
                 email: user.email,
                 cookie: user.cookie,
                 permission: user.permission,
+                permissionArray:JSON.parse(user.permission),
                 created: user.created,
             };
 

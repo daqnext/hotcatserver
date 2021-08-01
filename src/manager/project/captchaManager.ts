@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 14:40:40
- * @LastEditTime: 2021-07-25 13:31:05
+ * @LastEditTime: 2021-08-01 18:21:45
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/captchaManager.ts
@@ -42,7 +42,7 @@ class captchaManager {
         }
     }
 
-    static async Verity(id: string, captchaInput: string, clear: boolean = true): Promise<boolean> {
+    static async Verity(id: string, captchaInput: string, clear: boolean = false): Promise<boolean> {
         const capInRedis = await this.getFromRedis(id);
         if (capInRedis.toLowerCase() === captchaInput.toLowerCase()) {
             if (clear) {

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-12 12:00:35
- * @LastEditTime: 2021-07-21 14:46:12
+ * @LastEditTime: 2021-07-30 11:06:16
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/project/ipRegionInfo.ts
@@ -60,16 +60,20 @@ class ipRegionInfo {
         }
 
         const countryName = ip2loc.IP2Location_get_country_long(ip);
+        //console.info(countryName)
         const continent = this.countryToContinentMap[countryCode] ? this.countryToContinentMap[countryCode] : "unknown";
-
+        //console.info(continent)
+        //console.info(this.areaToRegionMap)
         let region: string = this.areaToRegionMap[countryName];
-        if (region === null || region === "") {
-            region = this.areaToRegionMap[continent];
+        //console.info(region)
+        if (region === null||region === undefined || region === "") {
+            region = this.areaToRegionMap[continent];   
         }
-        if (region === null || region === "") {
-            region = this.areaToRegionMap[continent];
+        //console.info(region)
+        if (region === null ||region === undefined|| region === "") {
+            region = "us-west-1c";
         }
-        region = "us-west-1c";
+        
 
         return {
             region: region,

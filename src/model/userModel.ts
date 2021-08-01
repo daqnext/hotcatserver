@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 10:47:59
- * @LastEditTime: 2021-07-21 15:05:24
+ * @LastEditTime: 2021-07-30 14:05:52
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/model/userModel.ts
@@ -19,7 +19,7 @@ class userModel extends Model implements IUserInfo {
   email: string;
   password:string;
   cookie: string;
-  permission: string[];
+  permission:string;
   created:number;
   // avatarUrl:string;
 }

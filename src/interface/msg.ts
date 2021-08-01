@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 11:38:23
- * @LastEditTime: 2021-07-28 08:51:47
+ * @LastEditTime: 2021-07-30 10:51:04
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/interface/user.ts
@@ -64,6 +64,10 @@ export interface IDeleteCoverMsg{
 }
 
 export interface IGetLivestreamMsg {
+    id:number
+}
+
+export interface IFinishUploadMsg{
     id:number
 }
 
