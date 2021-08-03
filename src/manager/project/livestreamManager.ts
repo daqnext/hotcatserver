@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 12:24:01
- * @LastEditTime: 2021-08-01 18:59:14
+ * @LastEditTime: 2021-08-03 14:03:38
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/livestreamManager.ts
@@ -21,6 +21,8 @@ import path from "path";
 import { rootDIR } from "../../global";
 import { categoryManager } from "./categoryManager";
 import { start } from "repl";
+import { remoteUploader } from "./remoteUploader";
+import { sftpManager } from "./sftpManager";
 
 //stream cache
 const LiveStreamCache_id_string = "LiveStreamInfo_string_id_";
@@ -248,8 +250,8 @@ class livestreamManager {
                     if (duration < 8000) {
                         // redisTool.getSingleInstance().redis.zincrby(WatchRankByCategory_category_zset + oldStreamInfo.category, 0, id + "");
                         // redisTool.getSingleInstance().redis.zincrby(WatchRankTotal_zset, 0, id + "");
-                        redisTool.getSingleInstance().redis.zrem(WatchRankByCategory_category_zset + oldStreamInfo.category,id+"")
-                        redisTool.getSingleInstance().redis.zrem(WatchRankTotal_zset, id + "")
+                        redisTool.getSingleInstance().redis.zrem(WatchRankByCategory_category_zset + oldStreamInfo.category, id + "");
+                        redisTool.getSingleInstance().redis.zrem(WatchRankTotal_zset, id + "");
                     }
 
                     break;
@@ -273,24 +275,22 @@ class livestreamManager {
         }
     }
 
-    static async FinishUpload(streamId:number){
-
+    static async FinishUpload(streamId: number) {
         //get old info
         const oldStreamInfo = await this.GetLiveStreamById(streamId);
         if (oldStreamInfo === null) {
             return false;
         }
-        
-        const watched=Math.floor(Math.random()*500+500)
+
+        const watched = Math.floor(Math.random() * 500 + 500);
         const updateData: any = {
             status: ELiveStreamStatus.END,
-            duration:100000,
-            endTimeStamp:moment.now(),
-            watched:watched
+            duration: 100000,
+            endTimeStamp: moment.now(),
+            watched: watched,
         };
 
-        
-        const [count] = await livestreamModel.update(updateData, { where: { id:streamId} });
+        const [count] = await livestreamModel.update(updateData, { where: { id: streamId } });
 
         if (count <= 0) {
             return false;
@@ -301,14 +301,53 @@ class livestreamManager {
 
         redisTool.getSingleInstance().redis.zincrby(WatchRankByCategory_category_zset + oldStreamInfo.category, watched, streamId + "");
         redisTool.getSingleInstance().redis.zincrby(WatchRankTotal_zset, watched, streamId + "");
-        
-        return true
+
+        return true;
+    }
+
+    static async DeleteLiveStreamRecord(streamId:number,remoteServerInfo): Promise<boolean> {
+        let remoteFolderPath = path.join("/srv/www", "record",streamId+"");
+        const result = await sftpManager.DeleteRemoteServerFolder(remoteFolderPath, remoteServerInfo);
+        if (result == false) {
+            return false;
+        }
+
+        return true;
+    }
+
+    static async DeleteLiveStreamCover(imgUrl: string, userId: number): Promise<boolean> {
+        const fixUrl = imgUrl.replace("..", "");
+        //console.log(name);
+        //http://us_west_1c_s.hotcat.live/livestreamCover/4/WX20210410-102428@2x_1gmgMr0PBt.png
+
+        const urlInfo = new URL(fixUrl);
+        urlInfo.origin;
+        const filePath = urlInfo.pathname;
+        const id = filePath.split("/")[2];
+        console.log(id);
+        // resp.send(ctx, 1,null,"no auth");
+        // return
+
+        if (userId + "" !== id) {
+            return false;
+        }
+
+        const { storageSeverAddress } = await liveServerManager.GetLiveServerByRegion(urlInfo.origin);
+        const remoteServerInfo = await remoteUploader.GetRemoteServerInfo(storageSeverAddress);
+
+        let remoteFilePath = path.join("/srv/www", urlInfo.pathname);
+        const result = await sftpManager.DeleteRemoteServerFile(remoteFilePath, remoteServerInfo);
+        if (result == false) {
+            return false;
+        }
+
+        return true;
     }
 
     static async DeleteLiveStream(streamId: number, secret: string): Promise<boolean> {
         try {
             const record = await livestreamModel.findOne({
-                attributes: ["id", "region", ["cover_img_url", "coverImgUrl"],"category"],
+                attributes: ["id", "region", ["cover_img_url", "coverImgUrl"], "category",["user_id","userId"]],
                 where: {
                     id: streamId,
                     secret: secret,
@@ -321,24 +360,33 @@ class livestreamManager {
             });
             if (number > 0) {
                 //delete cover
-                const fileName = record.coverImgUrl;
-                let saveFilePath = path.join(rootDIR, "../", fileName);
-                console.log(saveFilePath);
+                // const fileName = record.coverImgUrl;
+                // let saveFilePath = path.join(rootDIR, "../", fileName);
+                // console.log(saveFilePath);
 
-                if (fs.existsSync(saveFilePath)) {
-                    fs.unlinkSync(saveFilePath);
-                }
+                // if (fs.existsSync(saveFilePath)) {
+                //     fs.unlinkSync(saveFilePath);
+                // }
 
+                //delete record
+                const remoteServerInfo=await remoteUploader.GetRemoteServerInfoByRegion(record.region)
+                console.log(remoteServerInfo);
+                
+                await this.DeleteLiveStreamRecord(streamId,remoteServerInfo)
 
+                //delete cover
+                await this.DeleteLiveStreamCover(record.coverImgUrl,record.userId)
+
+                
                 //delete redis
                 const key = LiveStreamCache_id_string + streamId;
-                const pipe=redisTool.getSingleInstance().redis.pipeline()
+                const pipe = redisTool.getSingleInstance().redis.pipeline();
                 pipe.del(key);
-                pipe.zrem(WatchRankByCategory_category_zset+record.category,streamId)
-                pipe.zrem(WatchRankByCategory_category_zset+ELiveStreamStatus.ONLIVE,streamId)
-                pipe.zrem(WatchRankTotal_zset,streamId)
-                pipe.hdel(LiveStreamWatchedIncrease_hash,streamId+"")
-                pipe.exec()
+                pipe.zrem(WatchRankByCategory_category_zset + record.category, streamId);
+                pipe.zrem(WatchRankByCategory_category_zset + ELiveStreamStatus.ONLIVE, streamId);
+                pipe.zrem(WatchRankTotal_zset, streamId);
+                pipe.hdel(LiveStreamWatchedIncrease_hash, streamId + "");
+                pipe.exec();
 
                 return true;
             }
@@ -396,8 +444,8 @@ class livestreamManager {
             };
 
             //set to redis
-            this.setToRedis(streamInfo, 1800);           
-            
+            this.setToRedis(streamInfo, 1800);
+
             return streamInfo;
         } catch (error) {
             console.error("query live stream by id error", error, "streamId=", streamId);
@@ -405,31 +453,31 @@ class livestreamManager {
         }
     }
 
-    static async GetOnLiveStreamList(lastIndexMap:{[key:string]:number},count:number){
-        const key=WatchRankByCategory_category_zset+ELiveStreamStatus.ONLIVE 
-        let startIndex=lastIndexMap[ELiveStreamStatus.ONLIVE]
-            if (startIndex==null) {
-                startIndex=0
-            }else{
-                startIndex++
-            } 
-        const endIndex=startIndex+count-1
-        const idsStr = await redisTool.getSingleInstance().redis.zrange(key,startIndex,endIndex)
-        //console.log(category[i],"get ids count",strArray.length);
-        if (idsStr===null||idsStr.length<=0) {
-            return { id: [], contentMap: {},lastIndexMap:lastIndexMap };
+    static async GetOnLiveStreamList(lastIndexMap: { [key: string]: number }, count: number) {
+        const key = WatchRankByCategory_category_zset + ELiveStreamStatus.ONLIVE;
+        let startIndex = lastIndexMap[ELiveStreamStatus.ONLIVE];
+        if (startIndex == null) {
+            startIndex = 0;
+        } else {
+            startIndex++;
         }
-        lastIndexMap[ELiveStreamStatus.ONLIVE]=startIndex+idsStr.length
+        const endIndex = startIndex + count - 1;
+        const idsStr = await redisTool.getSingleInstance().redis.zrange(key, startIndex, endIndex);
+        //console.log(category[i],"get ids count",strArray.length);
+        if (idsStr === null || idsStr.length <= 0) {
+            return { id: [], contentMap: {}, lastIndexMap: lastIndexMap };
+        }
+        lastIndexMap[ELiveStreamStatus.ONLIVE] = startIndex + idsStr.length;
 
         const ids: number[] = idsStr.map((value) => parseInt(value));
         const content = await this.batchGetLiveStream(ids);
-        return { id: ids, contentMap: content,lastIndexMap:lastIndexMap };
+        return { id: ids, contentMap: content, lastIndexMap: lastIndexMap };
     }
 
-    static async GetLiveStreamList(category:string[],lastIndexMap:{[key:string]:number},count:number){
+    static async GetLiveStreamList(category: string[], lastIndexMap: { [key: string]: number }, count: number) {
         // const {categoryMap}=await categoryManager.centerGetAllCategory()
         // console.log(categoryMap);
-        // console.log(category); 
+        // console.log(category);
         // const excludeCategory:string[]=[]
         // for (let key in categoryMap) {
         //     if (!category.includes(key)) {
@@ -439,57 +487,47 @@ class livestreamManager {
         // console.log(excludeCategory);
 
         console.log(lastIndexMap);
-        
-        
-        
-        let leftCount=count
-        
-        const idsStr:string[]=[]
+
+        let leftCount = count;
+
+        const idsStr: string[] = [];
         for (let i = 0; i < category.length; i++) {
-            const key=WatchRankByCategory_category_zset+category[i]
-            let startIndex=lastIndexMap[category[i]]
-            if (startIndex==null) {
-                startIndex=0
-            }else{
-                startIndex++
+            const key = WatchRankByCategory_category_zset + category[i];
+            let startIndex = lastIndexMap[category[i]];
+            if (startIndex == null) {
+                startIndex = 0;
+            } else {
+                startIndex++;
             }
 
             //console.log("start index:",startIndex);
-            
-            const count=Math.floor(leftCount/(category.length-i))
+
+            const count = Math.floor(leftCount / (category.length - i));
             //console.log(count);
-            
-            const endIndex=startIndex+count-1
+
+            const endIndex = startIndex + count - 1;
             //console.log("endIndex:",endIndex);
-            
-            
-            const strArray = await redisTool.getSingleInstance().redis.zrange(key,startIndex,endIndex)
+
+            const strArray = await redisTool.getSingleInstance().redis.zrange(key, startIndex, endIndex);
             //console.log(category[i],"get ids count",strArray.length);
             //console.log("leftCount:",leftCount);
-            if (strArray.length<=0) {
-                continue
+            if (strArray.length <= 0) {
+                continue;
             }
 
-            lastIndexMap[category[i]]=startIndex+strArray.length
-            idsStr.push(...strArray)
-            
-            
-            leftCount=leftCount-strArray.length
-            
-            
-        }
-        if (idsStr.length<=0) {
-            return { id: [], contentMap: {},lastIndexMap:lastIndexMap };
-        }
+            lastIndexMap[category[i]] = startIndex + strArray.length;
+            idsStr.push(...strArray);
 
-        
+            leftCount = leftCount - strArray.length;
+        }
+        if (idsStr.length <= 0) {
+            return { id: [], contentMap: {}, lastIndexMap: lastIndexMap };
+        }
 
         const ids: number[] = idsStr.map((value) => parseInt(value));
         const content = await this.batchGetLiveStream(ids);
-        return { id: ids, contentMap: content,lastIndexMap:lastIndexMap };
-
+        return { id: ids, contentMap: content, lastIndexMap: lastIndexMap };
     }
-    
 
     // static async GetLiveStreamByRank(category: string | ELiveStreamStatus.ONLIVE, count: number) {
     //     const key = WatchRankByCategory_category_zset + category;
@@ -514,7 +552,7 @@ class livestreamManager {
             pipe.get(id);
         }
         const result = await pipe.exec();
-        console.log(result);
+        //console.log(result);
 
         const streamInfoMap: { [index: number]: string } = {};
         const sqlQueryIds: number[] = [];
@@ -564,7 +602,6 @@ class livestreamManager {
                     cdnRecordM3u8Link: streamUrl.cdnRecordM3u8Link,
                 };
 
-                
                 const str = JSON.stringify(streamInfo);
                 streamInfoMap[streamInfo.id] = str;
                 if (str !== "") {

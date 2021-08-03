@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-21 09:11:47
- * @LastEditTime: 2021-07-25 14:46:54
+ * @LastEditTime: 2021-08-03 12:59:49
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/project/liveserverManager.ts
@@ -35,7 +35,7 @@ class liveServerManager {
             return this.regionLiveServerMap[region];
         }
         return {
-            storageSeverAddress: "https://us_west_1c_s.hotcat.live",
+            storageSeverAddress: "http://us_west_1c_s.hotcat.live",
             rtmpServerAddress: "rtmp://us_west_1c_r.hotcat.live",
         };
     }

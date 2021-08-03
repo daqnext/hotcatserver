@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-12 12:00:35
- * @LastEditTime: 2021-07-30 11:06:16
+ * @LastEditTime: 2021-08-03 11:21:35
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/project/ipRegionInfo.ts
@@ -48,6 +48,15 @@ class ipRegionInfo {
             console.error("updateAreaToRegionMap error:", error);
         }
     }
+
+    static getRegionByArea(areaName:string){
+        let region: string = this.areaToRegionMap[areaName];
+        if (region === null||region === undefined || region === "") {
+            region = "us-west-1c"  
+        }
+        return region
+    }
+    
 
     static getIpInfo(ip: string): IIpInfo {
         const countryCode = ip2loc.IP2Location_get_country_short(ip);

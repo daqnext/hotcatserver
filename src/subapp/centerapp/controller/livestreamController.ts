@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:04:26
- * @LastEditTime: 2021-07-30 11:04:32
+ * @LastEditTime: 2021-08-03 14:17:43
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/livestreamController.ts
@@ -30,13 +30,15 @@ import randomString from "string-random";
 import { resp } from "../../../utils/resp";
 import { Utils } from "../../../utils/utils";
 import { livestreamManager } from "../../../manager/project/livestreamManager";
-import { ELiveStreamStatus, ILiveStream, IUserInfo } from "../../../interface/interface";
+import { ELiveStreamStatus, ILiveStream, IRemoteServerInfo, IUserInfo } from "../../../interface/interface";
 import { ipRegionInfo } from "../../../manager/project/ipRegionInfo";
 import { liveServerManager } from "../../../manager/project/liveserverManager";
 import { config } from "../../../config/conf";
 import { requestTool } from "../../../utils/request";
+import { remoteUploader } from "../../../manager/project/remoteUploader";
+import { sftpManager } from "../../../manager/project/sftpManager";
 
-const upload = multer({
+const uploadCover = multer({
     limits: {
         fields: 10,
         files: 1,
@@ -45,6 +47,23 @@ const upload = multer({
     fileFilter: (ctx, file, cb) => {
         let extName = path.extname(file.originalname);
         if (!Utils.filterFileExt(extName, [".png", ".jpg", ".jpeg", ".bmp", ".svg"])) {
+            cb(null, false);
+            cb(new Error("format error"));
+        } else {
+            cb(null, true);
+        }
+    },
+});
+
+const uploadVideo = multer({
+    limits: {
+        fields: 10,
+        files: 1,
+        fileSize: 500 * 1024 * 1024, // 500MB
+    },
+    fileFilter: (ctx, file, cb) => {
+        let extName = path.extname(file.originalname);
+        if (!Utils.filterFileExt(extName, [".mp4"])) {
             cb(null, false);
             cb(new Error("format error"));
         } else {
@@ -69,6 +88,9 @@ class livestreamController {
 
         Router.post("/api/livestream/getvideolist", C.handleGetVideoList);
 
+        //uploadvideo
+        Router.post("/api/livestream/uploadvideo", auth.ParseTokenMiddleware(),auth.AuthMiddleware(["admin"]), C.handleUploadVideo);
+
         //uploadcover
         Router.post("/api/livestream/uploadcover", auth.ParseTokenMiddleware(), C.handleUploadCover);
         //deleteCover
@@ -92,15 +114,19 @@ class livestreamController {
         //user ip
         const ip: string = Utils.getRequestIP(ctx.request);
         const ipInfo = ipRegionInfo.getIpInfo(ip);
-        console.info(ip)
-        console.info(ipInfo)
+        //console.info(ip)
+        //console.info(ipInfo)
 
+        const region=ipRegionInfo.getRegionByArea(msg.area)
+        console.log(region);
+        
         //liveServer
-        const liveServer = await liveServerManager.GetLiveServerByRegion(ipInfo.region);
+        const liveServer = await liveServerManager.GetLiveServerByRegion(region);
         if (liveServer == null) {
             resp.send(ctx, 1, null, "no active live server");
             return;
         }
+
 
         const { livestream, errMsg } = await livestreamManager.CreateLiveStream(
             user.id,
@@ -110,7 +136,7 @@ class livestreamController {
             msg.description,
             msg.category,
             msg.language,
-            ipInfo.region,
+            region,
             msg.coverImgUrl
         );
         if (livestream == null) {
@@ -325,7 +351,7 @@ class livestreamController {
             liveStreamInfo.cdnRecordM3u8Link = streamUrl.cdnRecordM3u8Link;
         }
 
-        console.log(streams);
+        //console.log(streams);
 
         const responseData = {
             data: streams,
@@ -373,15 +399,15 @@ class livestreamController {
             resp.send(ctx, 1, null, "no program info");
             return;
         }
-        console.log(msg);
+        //console.log(msg);
         
         if (msg.isOnlyOnLive) {
             const result=await livestreamManager.GetOnLiveStreamList(msg.lastIndexMap,msg.count)
-            console.log(result);
+            //console.log(result);
             resp.send(ctx,0,result)
         }else{
             const result=await livestreamManager.GetLiveStreamList(msg.category,msg.lastIndexMap,msg.count)
-            console.log(result);
+            //console.log(result);
             resp.send(ctx,0,result)
         }
         
@@ -402,7 +428,7 @@ class livestreamController {
     }
     async handleUploadCover(ctx: koa.Context, next: koa.Next) {
         try {
-            await upload.single("cover")(ctx, next);
+            await uploadCover.single("cover")(ctx, next);
 
             let originName = path.normalize(ctx.file.originalname);
             let extName = path.extname(originName);
@@ -429,16 +455,29 @@ class livestreamController {
             const user: IUserInfo = ctx.state.user;
             let fileName = originName.substring(0, originName.lastIndexOf("."));
             let randStr = randomString(10);
-            let uploadFileUrl = path.join("/public", "livestreamCover", user.id + "", fileName + "_" + randStr + extName);
 
-            let saveFilePath = path.join(rootDIR, "../", uploadFileUrl);
-            let dirName = path.dirname(saveFilePath);
-            if (!fs.existsSync(dirName)) {
-                fs.mkdirSync(path.dirname(saveFilePath), { recursive: true });
+            //save to local 
+            //let uploadFileUrl = path.join("/public", "livestreamCover", user.id + "", fileName + "_" + randStr + extName);
+            // let saveFilePath = path.join(rootDIR, "../", uploadFileUrl);
+            // let dirName = path.dirname(saveFilePath);
+            // if (!fs.existsSync(dirName)) {
+            //     fs.mkdirSync(path.dirname(saveFilePath), { recursive: true });
+            // }
+            // fs.writeFileSync(saveFilePath, ctx.file.buffer);
+
+            //upload to usa rtmp
+            const {storageSeverAddress}=await liveServerManager.GetLiveServerByRegion(config.coverSeverRegion)
+            const remoteServerInfo=await remoteUploader.GetRemoteServerInfo(storageSeverAddress)
+
+            let fileUrl=path.join("/livestreamCover", user.id + "", fileName + "_" + randStr + extName)
+            let remoteFilePath=path.join("/srv/www", fileUrl);
+            const result =await sftpManager.UploadBufferToRemoteServer(ctx.file.buffer,remoteFilePath,remoteServerInfo)
+            if (result==false) {
+                resp.send(ctx, 1, null,"upload error");
+                return 
             }
-            fs.writeFileSync(saveFilePath, ctx.file.buffer);
-
-            resp.send(ctx, 0, { url: uploadFileUrl });
+            resp.send(ctx, 0, { url: storageSeverAddress+fileUrl });
+            
         } catch (error) {
             console.log(error);
 
@@ -468,18 +507,54 @@ class livestreamController {
         console.log(user);
 
         let name = msg.imgName;
+
+        //delete local
+        //handle name for safe
+        // name = name.replace("..", "");
+        // name = path.basename(name);
+        // console.log(name);
+
+        // let fileName = path.join("/public", "livestreamCover", user.id + "", name);
+        // let saveFilePath = path.join(rootDIR, "../", fileName);
+        // console.log(saveFilePath);
+
+        // if (fs.existsSync(saveFilePath)) {
+        //     fs.unlinkSync(saveFilePath);
+        // }
+
+        //delete remote
         //handle name for safe
         name = name.replace("..", "");
-        name = path.basename(name);
         console.log(name);
+        //http://us_west_1c_s.hotcat.live/livestreamCover/4/WX20210410-102428@2x_1gmgMr0PBt.png
 
-        let fileName = path.join("/public", "livestreamCover", user.id + "", name);
-        let saveFilePath = path.join(rootDIR, "../", fileName);
-        console.log(saveFilePath);
+        const urlInfo = new URL(name);
+        urlInfo.origin
 
-        if (fs.existsSync(saveFilePath)) {
-            fs.unlinkSync(saveFilePath);
+        const filePath=urlInfo.pathname
+        const id=filePath.split("/")[2]
+        console.log(id);
+        // resp.send(ctx, 1,null,"no auth");
+        // return
+            
+        if (user.id+""!==id) {
+            resp.send(ctx, 1,null,"no auth");
+            return
         }
+
+
+        const {storageSeverAddress}=await liveServerManager.GetLiveServerByRegion(urlInfo.origin)
+            const remoteServerInfo=await remoteUploader.GetRemoteServerInfo(storageSeverAddress)
+
+            
+            let remoteFilePath=path.join("/srv/www", urlInfo.pathname);
+            const result =await sftpManager.DeleteRemoteServerFile(remoteFilePath,remoteServerInfo)
+            if (result==false) {
+                
+                resp.send(ctx, 1, null,"delete error");
+                return 
+            }
+
         resp.send(ctx, 0);
         return;
     }
@@ -494,6 +569,69 @@ class livestreamController {
         }
 
         resp.send(ctx,0);
+    }
+
+    async handleUploadVideo(ctx: koa.Context, next: koa.Next){
+        try {
+            await uploadVideo.single("video")(ctx, next);
+
+            //streamId
+            const { streamId }=ctx.request.body
+            const id=parseInt(streamId)
+            //streamInfo
+            const streamInfo=await livestreamManager.GetLiveStreamById(id)
+            //console.log(streamInfo);
+            if (streamInfo.status !== "ready") {
+                //not a empty stream
+                resp.send(ctx,1,null,"not a empty stream");
+                return
+            }
+            
+            //userInfo
+            const user: IUserInfo = ctx.state.user;
+            
+            //fileInfo
+            let originName = path.normalize(ctx.file.originalname);
+
+            //save file to temp dir
+            let uploadFileUrl = path.join("/temp", "video", user.id + "", originName);
+            let saveFilePath = path.join(rootDIR, "../", uploadFileUrl);
+            let dirName = path.dirname(saveFilePath);
+            if (!fs.existsSync(dirName)) {
+                fs.mkdirSync(path.dirname(saveFilePath), { recursive: true });
+            }
+            fs.writeFileSync(saveFilePath, ctx.file.buffer);
+
+            //remoteServerInfo
+            const remoteServerInfo=await remoteUploader.GetRemoteServerInfo(streamInfo.originRecordM3u8Link)
+            
+            //transcode
+            const outputDir=path.join(rootDIR, "../", "temp","hls",streamInfo.id+"");
+            let result =await remoteUploader.transcodeVideo(saveFilePath,remoteServerInfo.host,streamInfo.id,outputDir)
+            if (!result) {
+                resp.send(ctx,1,null,"Transcode error");
+                return
+            }
+            //upload
+            const remoteDir="/srv/www/record/"+streamId
+            result=await remoteUploader.uploadFolderToRemote(outputDir,remoteDir,remoteServerInfo)
+            if (!result) {
+                resp.send(ctx,1,null,"Upload to rtmp server error");
+                return
+            }
+
+            //modify state
+            livestreamManager.FinishUpload(streamInfo.id)
+
+            //delete local
+            Utils.delFile(outputDir,"")
+            Utils.delFile(saveFilePath,"")
+        
+            resp.send(ctx,0);
+        } catch (error) {
+            console.log(error);
+            resp.send(ctx,1,null,error);
+        }
     }
 }
 

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 11:38:23
- * @LastEditTime: 2021-07-30 10:51:04
+ * @LastEditTime: 2021-08-03 11:22:39
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/interface/user.ts
@@ -32,6 +32,7 @@ export interface ICreateLivestreamMsg {
     subTitle: string;
     description: string;
     category: string;
+    area:string;
     language:string;
     coverImgUrl: string;
     captcha: string;

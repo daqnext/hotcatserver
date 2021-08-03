@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 09:09:21
- * @LastEditTime: 2021-07-30 14:04:05
+ * @LastEditTime: 2021-08-03 12:29:27
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/interface/interface.ts
@@ -91,4 +91,12 @@ export interface IIpInfo{
     region:string,
     continent:string
     country:string,
+}
+
+export interface IRemoteServerInfo{
+    host?:string,
+    ip:string,
+    port:string,
+    userName:string,
+    password:string
 }

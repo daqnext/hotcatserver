@@ -9,6 +9,7 @@
 !/data/.keep
 /.vscode
 /node_modules
+/temp
 
 src/config/dev_config.ts
 src/config/dev_config.ts

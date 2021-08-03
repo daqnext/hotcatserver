@@ -43,6 +43,7 @@
     "axios": "^0.21.1",
     "captchapng": "0.0.1",
     "csv-parse": "^4.16.0",
+    "fluent-ffmpeg": "^2.1.2",
     "image-size": "^1.0.0",
     "ioredis": "^4.27.6",
     "ip2location-nodejs": "^8.5.0",
@@ -68,6 +69,7 @@
     "query-string": "^7.0.1",
     "request": "^2.88.2",
     "sequelize": "^6.6.4",
+    "ssh2-sftp-client": "^7.0.0",
     "string-random": "^0.1.3"
   }
 }
