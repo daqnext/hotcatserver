@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:58:13
- * @LastEditTime: 2021-07-27 22:31:17
+ * @LastEditTime: 2021-08-04 22:41:13
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/srsNotifyController.ts
@@ -24,6 +24,9 @@ class srsNotifyController {
 
         //on_unpublish
         Router.post("/api/srsnotify/onunpublish", C.onUnPublish);
+
+        //on_update
+        Router.post("/api/srsnotify/onupdate", C.onUpdate);
 
         //watching
         Router.get("/api/livestream/watching/:streamId", C.helloworld);
@@ -100,6 +103,79 @@ class srsNotifyController {
         ctx.body = 0;
     }
 
+    async onUpdate(ctx: koa.Context, next: koa.Next){
+        const msg = ctx.request.body;
+        console.log(msg);
+
+        if (msg.call!=='update_publish') {
+            ctx.status = 200;
+            ctx.body = 0;
+            return
+        }
+
+        // {
+        //     app: 'live',
+        //     flashver: 'LNX 9,0,124,2',
+        //     swfurl: '',
+        //     tcurl: 'rtmp://localhost:1935/live',
+        //     pageurl: '',
+        //     addr: '127.0.0.1',
+        //     clientid: '223',
+        //     call: 'update_play',
+        //     time: '15',
+        //     timestamp: '13949',
+        //     name: '31'
+        //   }
+
+        // {
+        //     app: 'live',
+        //     flashver: 'FMLE/3.0 (compatible; FMSc/1.0)',
+        //     swfurl: 'rtmp://us_west_1c_r.hotcat.live/live?secret=62fovpw9t7',
+        //     tcurl: 'rtmp://us_west_1c_r.hotcat.live/live?secret=62fovpw9t7',
+        //     pageurl: '',
+        //     addr: '192.168.56.1',
+        //     clientid: '221',
+        //     call: 'update_publish',
+        //     time: '15',
+        //     timestamp: '13821',
+        //     name: '31'
+        //   }
+
+        // const paramStr=msg.swfurl.split("?")[1]
+        // const param = queryString.parse(paramStr);
+        // const secret = param.secret as string
+        
+        // if (!secret) {
+        //     ctx.status = 500;
+        //     ctx.body = 1;
+        //     return
+        // }
+
+        const streamId=parseInt(msg.name)
+        if (streamId===null) {
+            ctx.status = 500;
+            ctx.body = 1;
+            return
+        }
+
+        const stream = await livestreamManager.GetLiveStreamById(streamId)
+        if (stream.status===ELiveStreamStatus.END) {
+            ctx.status = 500;
+            ctx.body = 1;
+            return
+        }
+
+        const result=await livestreamManager.StreamKeepPush(streamId)
+        if (result==false) {
+            ctx.status = 500;
+            ctx.body = 1;
+            return
+        }
+        
+        ctx.status = 200;
+        ctx.body = 0;
+    }
+
     async onUnPublish(ctx: koa.Context, next: koa.Next) {
         const msg: IStreamOnUnPublishMsg = ctx.request.body;
         console.log(msg);
@@ -117,6 +193,13 @@ class srsNotifyController {
         if (streamId===null) {
             ctx.status = 500;
             ctx.body = 1;
+            return
+        }
+
+        const stream = await livestreamManager.GetLiveStreamById(streamId)
+        if (stream.status===ELiveStreamStatus.END) {
+            ctx.status = 200;
+            ctx.body = 0;
             return
         }
 

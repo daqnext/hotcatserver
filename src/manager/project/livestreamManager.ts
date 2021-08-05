@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 12:24:01
- * @LastEditTime: 2021-08-03 14:03:38
+ * @LastEditTime: 2021-08-04 23:11:45
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/livestreamManager.ts
@@ -18,7 +18,7 @@ import { ELiveStreamStatus, ILiveStream } from "../../interface/interface";
 import { QueryTypes, Sequelize } from "sequelize/types";
 import { SqlTool } from "../../db/SqlTool";
 import path from "path";
-import { rootDIR } from "../../global";
+import { logger, rootDIR } from "../../global";
 import { categoryManager } from "./categoryManager";
 import { start } from "repl";
 import { remoteUploader } from "./remoteUploader";
@@ -69,6 +69,7 @@ class livestreamManager {
                 return { livestream: null, errMsg: "key duplicated" };
             }
 
+            const nowTime=moment.now()
             let livestream = await livestreamModel.create({
                 name: streamName,
                 userId: userId,
@@ -81,9 +82,9 @@ class livestreamManager {
                 secret: secret,
                 status: "ready",
                 duration: 0,
-                createTimeStamp: moment.now(),
-                startTimeStamp: moment.now(),
-                endTimeStamp: 0,
+                createTimeStamp: nowTime,
+                startTimeStamp: nowTime,
+                endTimeStamp: nowTime,
                 coverImgUrl: coverImgUrl,
             });
 
@@ -142,7 +143,7 @@ class livestreamManager {
             //to redis
             const str = JSON.stringify(result);
             if (str) {
-                redisTool.getSingleInstance().redis.set(key, str, "EX", 3);
+                redisTool.getSingleInstance().redis.set(key, str, "EX", 1);
             }
             return { rows: result.rows, count: result.count };
         } catch (error) {
@@ -205,6 +206,39 @@ class livestreamManager {
         }
     }
 
+    static async StreamKeepPush(id: number){
+        try {
+             //get old info
+             const oldStreamInfo = await this.GetLiveStreamById(id);
+             if (oldStreamInfo === null) {
+                 return false;
+             }
+
+             const nowTime=moment.now()
+             const updateData: any = {
+                duration: oldStreamInfo.duration,
+                endTimeStamp:nowTime
+            };
+
+            updateData.duration = oldStreamInfo.duration + (moment.now() - oldStreamInfo.endTimeStamp);
+
+            const [count] = await livestreamModel.update(updateData, { where: { id: id} });
+
+            if (count <= 0) {
+                return false;
+            }
+
+            //update redis
+            this.updateStreamInfoInRedis(id, updateData);
+
+            return true
+
+
+        } catch (error) {
+            
+        }
+    }
+
     static async ModifyStreamStatus(id: number, secret: string, newStatus: ELiveStreamStatus) {
         //update sql
         try {
@@ -218,16 +252,18 @@ class livestreamManager {
                 return false;
             }
 
+            const nowTime=moment.now();
             let duration = oldStreamInfo.duration;
             switch (newStatus) {
                 case ELiveStreamStatus.END:
                 case ELiveStreamStatus.PAUSE:
-                    updateData.endTimeStamp = moment.now();
-                    updateData.duration = oldStreamInfo.duration + (updateData.endTimeStamp - oldStreamInfo.startTimeStamp);
+                    updateData.endTimeStamp = nowTime;
+                    updateData.duration = oldStreamInfo.duration + (updateData.endTimeStamp - oldStreamInfo.endTimeStamp);
                     duration = updateData.duration;
                     break;
                 case ELiveStreamStatus.ONLIVE:
-                    updateData.startTimeStamp = moment.now();
+                    updateData.startTimeStamp = nowTime;
+                    updateData.endTimeStamp = nowTime;
                     break;
             }
 
@@ -316,7 +352,8 @@ class livestreamManager {
     }
 
     static async DeleteLiveStreamCover(imgUrl: string, userId: number): Promise<boolean> {
-        const fixUrl = imgUrl.replace("..", "");
+        try {
+            const fixUrl = imgUrl.replace("..", "");
         //console.log(name);
         //http://us_west_1c_s.hotcat.live/livestreamCover/4/WX20210410-102428@2x_1gmgMr0PBt.png
 
@@ -342,6 +379,11 @@ class livestreamManager {
         }
 
         return true;
+        } catch (error) {
+            console.error(error);
+            return false
+        }
+        
     }
 
     static async DeleteLiveStream(streamId: number, secret: string): Promise<boolean> {
@@ -386,7 +428,7 @@ class livestreamManager {
                 pipe.zrem(WatchRankByCategory_category_zset + ELiveStreamStatus.ONLIVE, streamId);
                 pipe.zrem(WatchRankTotal_zset, streamId);
                 pipe.hdel(LiveStreamWatchedIncrease_hash, streamId + "");
-                pipe.exec();
+                await pipe.exec();
 
                 return true;
             }

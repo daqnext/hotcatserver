@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 11:38:23
- * @LastEditTime: 2021-08-03 11:22:39
+ * @LastEditTime: 2021-08-04 20:46:53
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/interface/user.ts
@@ -56,6 +56,11 @@ export interface IFinishLivestreamMsg{
 }
 
 export interface IDeleteLivestreamMsg {
+    streamId: number;
+    secret: string;
+}
+
+export interface IStopLivestreamMsg {
     streamId: number;
     secret: string;
 }

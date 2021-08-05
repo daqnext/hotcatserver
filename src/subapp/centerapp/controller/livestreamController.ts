@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:04:26
- * @LastEditTime: 2021-08-03 14:17:43
+ * @LastEditTime: 2021-08-04 20:39:55
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/livestreamController.ts
@@ -206,9 +206,16 @@ class livestreamController {
         const msg: IDeleteLivestreamMsg = ctx.request.body;
         console.log(msg);
 
+        const stream=await livestreamManager.GetLiveStreamById(msg.streamId)
+        if (stream.status==ELiveStreamStatus.ONLIVE) {
+            resp.send(ctx,1,null,"Please stop livestreaming first")
+            return
+        }
+
         const success = await livestreamManager.DeleteLiveStream(msg.streamId, msg.secret);
         if (success == false) {
             resp.send(ctx, 1, null, "delete failed");
+            return
         }
         //delete bindDomain in cdn
         const requestUrl = config.cdn_host + "/api/v1/admin/hotcat/deletelivebinddomain";

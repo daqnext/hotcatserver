@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-08-01 14:42:48
- * @LastEditTime: 2021-08-01 17:18:02
+ * @LastEditTime: 2021-08-04 22:31:31
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/subapp/regionapp/controller/adminController.ts
@@ -15,9 +15,9 @@ import { categoryManager } from "../../../manager/project/categoryManager";
 import { resp } from "../../../utils/resp";
 import { auth } from "../../../manager/common/auth";
 import { livestreamManager } from "../../../manager/project/livestreamManager";
-import { ILiveStream } from "../../../interface/interface";
+import { ELiveStreamStatus, ILiveStream } from "../../../interface/interface";
 import { Op } from "sequelize";
-import { IDeleteLivestreamMsg } from "../../../interface/msg";
+import { IDeleteLivestreamMsg, IStopLivestreamMsg } from "../../../interface/msg";
 import { requestTool } from "../../../utils/request";
 
 class adminController {
@@ -26,6 +26,9 @@ class adminController {
         //config all the get requests
         Router.post("/api/admin/managelist", auth.ParseTokenMiddleware(),auth.AuthMiddleware(["admin"]),C.adminManageListHandler);
         Router.post("/api/admin/deletestream", auth.ParseTokenMiddleware(),auth.AuthMiddleware(["admin"]),C.adminDeleteStreamHandler);
+        Router.post("/api/admin/stopstream", auth.ParseTokenMiddleware(),auth.AuthMiddleware(["admin"]),C.adminStopStreamHandler);
+        Router.post("/api/admin/restartstream", auth.ParseTokenMiddleware(),auth.AuthMiddleware(["admin"]),C.adminRestartStreamHandler);
+
 
         //config all the post requests
         return C;
@@ -107,7 +110,7 @@ class adminController {
             liveStreamInfo.cdnRecordM3u8Link = streamUrl.cdnRecordM3u8Link;
         }
 
-        console.log(streams);
+        //console.log(streams);
 
         const responseData = {
             data: streams,
@@ -120,9 +123,17 @@ class adminController {
         const msg: IDeleteLivestreamMsg = ctx.request.body;
         console.log(msg);
 
+        const stream=await livestreamManager.GetLiveStreamById(msg.streamId)
+        if (stream.status==ELiveStreamStatus.ONLIVE) {
+            resp.send(ctx,1,null,"Please stop livestreaming first")
+            return
+        }
+        
+
         const success = await livestreamManager.DeleteLiveStream(msg.streamId, msg.secret);
         if (success == false) {
             resp.send(ctx, 1, null, "delete failed");
+            return
         }
         //delete bindDomain in cdn
         const requestUrl = config.cdn_host + "/api/v1/admin/hotcat/deletelivebinddomain";
@@ -138,6 +149,31 @@ class adminController {
         });
 
         resp.send(ctx, 0);
+    }
+
+    async adminStopStreamHandler(ctx: koa.Context, next: koa.Next){
+        const msg: IStopLivestreamMsg = ctx.request.body;
+        //console.log(msg);
+
+        await livestreamManager.ModifyStreamStatus(msg.streamId,msg.secret,ELiveStreamStatus.END)
+
+        resp.send(ctx, 0);
+        
+    }
+
+    async adminRestartStreamHandler(ctx: koa.Context, next: koa.Next){
+        const msg: IStopLivestreamMsg = ctx.request.body;
+        //console.log(msg);
+        const stream=await livestreamManager.GetLiveStreamById(msg.streamId)
+        if (stream.status==ELiveStreamStatus.READY) {
+            resp.send(ctx,1,null,"Stream not started")
+            return
+        }
+
+        await livestreamManager.ModifyStreamStatus(msg.streamId,msg.secret,ELiveStreamStatus.PAUSE)
+
+        resp.send(ctx, 0);
+        
     }
     
 }
