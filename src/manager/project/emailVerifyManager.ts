@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-16 22:42:40
- * @LastEditTime: 2021-07-18 13:00:33
+ * @LastEditTime: 2021-08-10 13:28:40
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/project/emailVerify.ts
@@ -32,10 +32,10 @@ class emailVerifyManager {
             smtpTransport.sendMail(
                 {
                     //from    : 'alias Name<foobar@latelee.org>',
-                    from: "contact" + " " + "<" + "contact@hotcat.live" + ">",
+                    from: "noreply" + " " + "<" + "noreply@hotcat.live" + ">",
                     //'li@latelee.org, latelee@163.com',
                     to: targetEmail,
-                    subject: "Verification code from hotcat.live", //邮件主题
+                    subject: "Verification code from hotcat.live", 
                     //text    : msg,
                     html: "Welcome to hotcat.live!\n Your verification code is [" + vCode + "], it will expire in 24 hours",
                 },
@@ -95,7 +95,7 @@ class emailVerifyManager {
         }
 
         if (vcode === code) {
-            redisTool.getSingleInstance().redis.del(vCodeKey);
+            //redisTool.getSingleInstance().redis.del(vCodeKey);
             return true;
         }
         return false;

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 12:24:01
- * @LastEditTime: 2021-08-04 23:11:45
+ * @LastEditTime: 2021-08-09 12:52:08
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/manager/livestreamManager.ts
@@ -23,6 +23,7 @@ import { categoryManager } from "./categoryManager";
 import { start } from "repl";
 import { remoteUploader } from "./remoteUploader";
 import { sftpManager } from "./sftpManager";
+import { regionMasterManager } from "./regionServerManager";
 
 //stream cache
 const LiveStreamCache_id_string = "LiveStreamInfo_string_id_";
@@ -507,13 +508,14 @@ class livestreamManager {
         const idsStr = await redisTool.getSingleInstance().redis.zrange(key, startIndex, endIndex);
         //console.log(category[i],"get ids count",strArray.length);
         if (idsStr === null || idsStr.length <= 0) {
-            return { id: [], contentMap: {}, lastIndexMap: lastIndexMap };
+            return { id: [], contentMap: {},watchedMap:{}, lastIndexMap: lastIndexMap };
         }
         lastIndexMap[ELiveStreamStatus.ONLIVE] = startIndex + idsStr.length;
 
         const ids: number[] = idsStr.map((value) => parseInt(value));
         const content = await this.batchGetLiveStream(ids);
-        return { id: ids, contentMap: content, lastIndexMap: lastIndexMap };
+        const watchedMap = await this.batchGetLiveStreamWatched(ids)
+        return { id: ids, contentMap: content,watchedMap:watchedMap, lastIndexMap: lastIndexMap };
     }
 
     static async GetLiveStreamList(category: string[], lastIndexMap: { [key: string]: number }, count: number) {
@@ -563,12 +565,13 @@ class livestreamManager {
             leftCount = leftCount - strArray.length;
         }
         if (idsStr.length <= 0) {
-            return { id: [], contentMap: {}, lastIndexMap: lastIndexMap };
+            return { id: [], contentMap: {},watchedMap:{}, lastIndexMap: lastIndexMap };
         }
 
         const ids: number[] = idsStr.map((value) => parseInt(value));
         const content = await this.batchGetLiveStream(ids);
-        return { id: ids, contentMap: content, lastIndexMap: lastIndexMap };
+        const watchedMap = await this.batchGetLiveStreamWatched(ids)
+        return { id: ids, contentMap: content,watchedMap:watchedMap, lastIndexMap: lastIndexMap };
     }
 
     // static async GetLiveStreamByRank(category: string | ELiveStreamStatus.ONLIVE, count: number) {
@@ -584,6 +587,28 @@ class livestreamManager {
 
     //     return { id: ids, contentMap: content };
     // }
+
+    static async batchGetLiveStreamWatched(ids:number[]){
+        const watchedMap:{[key:number]:number}={}
+        const watchedPipe = redisTool.getSingleInstance().redis.pipeline();
+        for (let i = 0; i < ids.length; i++) {
+            watchedPipe.zscore(WatchRankTotal_zset,ids[i]+"")
+        }
+        const watchedArray = await watchedPipe.exec()
+        for (let i = 0; i < ids.length; i++) {
+            if (watchedArray[i][0]!==null) {
+                continue
+            }
+            const watchedCount=parseInt(watchedArray[i][1])
+            if (watchedCount!=null && watchedCount!=NaN) {
+                watchedMap[ids[i]]=watchedCount
+            }
+            
+        }
+
+        return watchedMap
+
+    }
 
     // batch get liveStream infos
     static async batchGetLiveStream(ids: number[]) {
@@ -717,6 +742,10 @@ class livestreamManager {
     }
 
     static async ScheduleUpdateWatched() {
+        if (regionMasterManager.isRegionMaster==false) {
+            return
+        }
+       
         const result = await redisTool.getSingleInstance().redis.hgetall(LiveStreamWatchedIncrease_hash);
         if (result === null) {
             return;
@@ -801,6 +830,14 @@ class livestreamManager {
             return null;
         }
         const streamInfo: ILiveStream = JSON.parse(str);
+
+        //get watched
+        const watched = await redisTool.getSingleInstance().redis.zscore(WatchRankTotal_zset,id+"")
+        const watchedCount=parseInt(watched)
+        if (watchedCount!=null && watchedCount!=NaN) {
+            streamInfo.watched=watchedCount
+        }
+
         return streamInfo;
     }
 

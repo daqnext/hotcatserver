@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-09 08:50:53
- * @LastEditTime: 2021-08-01 15:54:56
+ * @LastEditTime: 2021-08-12 11:46:06
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/router/router.ts
@@ -40,7 +40,7 @@ class AppRouter {
 
     static async afterprocess() {}
 
-    static GenRouter(controllerPath: string,allowCors:boolean=true) {
+    static GenRouter(controllerPath: string, allowCors: boolean = true) {
         const App = new koa({
             proxy: true,
             proxyIpHeader: "X-Real-IP",
@@ -49,48 +49,49 @@ class AppRouter {
 
         //cross
         if (allowCors) {
-            App.use(
-                cors({
-                    origin: function(ctx) {    
-                        return '*';
-                    },
-                    credentials: true, 
-                })
-            );
+            // App.use(
+            //     cors({
+            //         origin: function (ctx) {
+            //             return "*";
+            //         },
+            //         credentials: true,
+            //     })
+            // );
+            App.use(cors())
         }
-        
+
         App.use(koaLogger);
-            //initialize the error handler
-            App.use(async (ctx, next) => {
-                try {
-                    await next(); // execute code for descendants
-                    if (ctx.body === undefined) {
-                        // no resources
-                        ctx.status = 404;
-                        ctx.body = "not found";
+        //initialize the error handler
+        App.use(async (ctx, next) => {
+            try {
+                await next(); // execute code for descendants
+                if (ctx.body === undefined) {
+                    // no resources
+                    ctx.status = 404;
+                    ctx.body = "not found";
 
-                        console.warn("not found 404:", ctx.request);
-                    }
-                } catch (e) {
-                    // If the following code reports an error, return 500
-                    ctx.status = 500;
-                    ctx.body = "server error";
-                    console.warn("erver error:", ctx.request);
+                    console.warn("not found 404:", ctx.request);
                 }
-            });
+            } catch (e) {
+                // If the following code reports an error, return 500
+                ctx.status = 500;
+                ctx.body = "server error";
+                console.warn("erver error:", ctx.request);
+            }
+        });
 
-            App.use(
-                bodyParser({
-                    //multipart: true,
-                    onerror: function (err, ctx) {
-                        ctx.throw("body parse error", 422);
-                    },
-                })
-            );
+        App.use(
+            bodyParser({
+                //multipart: true,
+                onerror: function (err, ctx) {
+                    ctx.throw("body parse error", 422);
+                },
+            })
+        );
 
-            //App.use(AppRouter.preprocess);
-            App.use(Router.routes()).use(Router.allowedMethods());
-            //App.use(AppRouter.postprocess);
+        //App.use(AppRouter.preprocess);
+        App.use(Router.routes()).use(Router.allowedMethods());
+        //App.use(AppRouter.postprocess);
 
         try {
             let files = fs.readdirSync(controllerPath);
@@ -105,7 +106,6 @@ class AppRouter {
                 const filePath = path.join(controllerPath, file);
                 require(filePath).init(Router);
             });
-            
         } catch (error) {
             console.error("no any controller file server won't start ");
             return;

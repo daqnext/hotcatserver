@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:58:13
- * @LastEditTime: 2021-08-04 22:41:13
+ * @LastEditTime: 2021-08-05 10:15:33
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/srsNotifyController.ts
@@ -60,7 +60,11 @@ class srsNotifyController {
         // return
 
         //check id and secret
-        const paramStr=msg.swfurl.split("?")[1]
+        let rtmpUrl=msg.swfurl
+        if (rtmpUrl=="") {
+            rtmpUrl=msg.tcurl
+        }
+        const paramStr=rtmpUrl.split("?")[1]
         const param = queryString.parse(paramStr);
         const secret = param.secret as string
         
@@ -104,6 +108,11 @@ class srsNotifyController {
     }
 
     async onUpdate(ctx: koa.Context, next: koa.Next){
+
+        // ctx.status = 200;
+        // ctx.body = 0;
+        // return
+        
         const msg = ctx.request.body;
         console.log(msg);
 
@@ -141,15 +150,19 @@ class srsNotifyController {
         //     name: '31'
         //   }
 
-        // const paramStr=msg.swfurl.split("?")[1]
-        // const param = queryString.parse(paramStr);
-        // const secret = param.secret as string
+        let rtmpUrl=msg.swfurl
+        if (rtmpUrl=="") {
+            rtmpUrl=msg.tcurl
+        }
+        const paramStr=rtmpUrl.split("?")[1]
+        const param = queryString.parse(paramStr);
+        const secret = param.secret as string
         
-        // if (!secret) {
-        //     ctx.status = 500;
-        //     ctx.body = 1;
-        //     return
-        // }
+        if (!secret) {
+            ctx.status = 500;
+            ctx.body = 1;
+            return
+        }
 
         const streamId=parseInt(msg.name)
         if (streamId===null) {
@@ -160,6 +173,14 @@ class srsNotifyController {
 
         const stream = await livestreamManager.GetLiveStreamById(streamId)
         if (stream.status===ELiveStreamStatus.END) {
+            ctx.status = 500;
+            ctx.body = 1;
+            return
+        }
+
+        if (stream.duration>3*60*60*1000) {
+             //modify status
+            livestreamManager.ModifyStreamStatus(streamId,secret,ELiveStreamStatus.END)
             ctx.status = 500;
             ctx.body = 1;
             return
@@ -181,7 +202,11 @@ class srsNotifyController {
         console.log(msg);
 
         //check id and secret
-        const paramStr=msg.swfurl.split("?")[1]
+        let rtmpUrl=msg.swfurl
+        if (rtmpUrl=="") {
+            rtmpUrl=msg.tcurl
+        }
+        const paramStr=rtmpUrl.split("?")[1]
         const param = queryString.parse(paramStr);
         const secret = param.secret as string
         if (!secret) {

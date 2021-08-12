@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-07 11:34:52
- * @LastEditTime: 2021-08-01 18:19:18
+ * @LastEditTime: 2021-08-05 08:49:07
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/userController.ts
@@ -99,6 +99,18 @@ class userController {
             };
             return;
         }
+
+        //check vcode
+        const isEmailCodeOk=await emailVerifyManager.ValidateEmailVCode(msg.email,msg.vCode)
+        if (!isEmailCodeOk) {
+            ctx.body = {
+                status: 1,
+                data: null,
+                msg: "Email verification code error",
+            };
+            return;
+        }
+        
 
         const { user, errMsg } = await userManager.createNewUser(msg);
         if (user === null && (errMsg === "user name already exist" || errMsg === "email already exist")) {

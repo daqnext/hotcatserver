@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-13 09:08:07
- * @LastEditTime: 2021-07-30 11:34:53
+ * @LastEditTime: 2021-08-05 10:43:11
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/subapp/centerapp/job/job.ts
@@ -14,20 +14,27 @@ import { ipRegionInfo } from "../../../manager/project/ipRegionInfo";
 import { languageManager } from "../../../manager/project/languageManager";
 import { liveServerManager } from "../../../manager/project/liveserverManager";
 import { livestreamManager } from "../../../manager/project/livestreamManager";
+import { regionMasterManager } from "../../../manager/project/regionServerManager";
 import { Utils } from "../../../utils/utils";
 
-function InitJob() {
+async function InitJob() {
     const instanceIp=Utils.getInstanceIp()
 
     ipRegionInfo.init();
     //area to region map
     ipRegionInfo.updateAreaToRegionMap();
     liveServerManager.updateLiveServerMap();
+    
+    //apply Master
+    await regionMasterManager.ApplyForRegionMaster()
 
-    if ((process.env.NODE_APP_INSTANCE === "0"&&instanceIp===config.singleInstanceIp) || config.node_env === "develop") {
-        //only 1 process
+    if (regionMasterManager.isRegionMaster) {
         livestreamManager.InitWatched();
     }
+    // if ((process.env.NODE_APP_INSTANCE === "0"&&instanceIp===config.singleInstanceIp) || config.node_env === "develop") {
+    //     //only 1 process
+    //     livestreamManager.InitWatched();
+    // }
 }
 
 function StartScheduleJob() {
@@ -45,13 +52,16 @@ function StartScheduleJob() {
         await languageManager.centerRefreshLanguage()
     })
 
+    schedule.scheduleJob("ScheduleUpdateConfig","0/10 * * * * *",async()=>{
+        await regionMasterManager.ApplyForRegionMaster()
+        await regionMasterManager.KeepRegionMasterToken()
+    })
+    
+
     //only 1 process
-    if ((process.env.NODE_APP_INSTANCE === "0"&&instanceIp===config.singleInstanceIp) || config.node_env === "develop") {
-        console.info("process id:",process.env.NODE_APP_INSTANCE,"run schedule job");
-        
-        //update watched every 2 mins
-        schedule.scheduleJob("ScheduleUpdateWatched", "5 0/2 * * * *", livestreamManager.ScheduleUpdateWatched);
-    }
+    //update watched every 2 mins
+    schedule.scheduleJob("ScheduleUpdateWatched", "5 0/2 * * * *", livestreamManager.ScheduleUpdateWatched);
+    
 }
 
 export { InitJob, StartScheduleJob };

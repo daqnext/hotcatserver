@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-07-08 13:04:26
- * @LastEditTime: 2021-08-04 20:39:55
+ * @LastEditTime: 2021-08-05 16:23:40
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /hotcatserver/src/controller/livestreamController.ts
@@ -460,8 +460,8 @@ class livestreamController {
             // }
 
             const user: IUserInfo = ctx.state.user;
-            let fileName = originName.substring(0, originName.lastIndexOf("."));
-            let randStr = randomString(10);
+            //let fileName = originName.substring(0, originName.lastIndexOf("."));
+            let randStr = randomString(30);
 
             //save to local 
             //let uploadFileUrl = path.join("/public", "livestreamCover", user.id + "", fileName + "_" + randStr + extName);
@@ -476,7 +476,7 @@ class livestreamController {
             const {storageSeverAddress}=await liveServerManager.GetLiveServerByRegion(config.coverSeverRegion)
             const remoteServerInfo=await remoteUploader.GetRemoteServerInfo(storageSeverAddress)
 
-            let fileUrl=path.join("/livestreamCover", user.id + "", fileName + "_" + randStr + extName)
+            let fileUrl=path.join("/livestreamCover", user.id + "", randStr + extName)
             let remoteFilePath=path.join("/srv/www", fileUrl);
             const result =await sftpManager.UploadBufferToRemoteServer(ctx.file.buffer,remoteFilePath,remoteServerInfo)
             if (result==false) {
